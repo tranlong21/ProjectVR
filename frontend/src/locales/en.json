@@ -1,0 +1,50 @@
+{
+  "nav": {
+    "home": "Home",
+    "projects": "Projects",
+    "services": "Services",
+    "solutions": "Solutions",
+    "portfolio": "Portfolio",
+    "technology": "Technology",
+    "blog": "Blog",
+    "about": "About",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "dashboard": "Dashboard",
+    "admin": "Admin"
+  },
+  "hero": {
+    "title": "Experience the Future of Reality",
+    "subtitle": "Immersive VR/AR Solutions for Business and Entertainment",
+    "cta": "Explore Projects"
+  },
+  "home": {
+    "featured": "Featured Projects",
+    "view_all": "View All Projects"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "read_more": "Read More",
+    "all": "All"
+  },
+  "banners": {
+    "services": {
+      "title": "Our Services",
+      "subtitle": "Comprehensive VR/AR solutions tailored to your business needs"
+    },
+    "solutions": {
+      "title": "Industry Solutions",
+      "subtitle": "Transforming industries with immersive virtual reality experiences"
+    },
+    "technology": {
+      "title": "Our Technology",
+      "subtitle": "Cutting-edge VR/AR technology powered by WebXR and AI"
+    },
+    "blog": {
+      "title": "Blog & News",
+      "subtitle": "Latest updates on VR/AR technology and our platform"
+    }
+  }
+}

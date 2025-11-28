@@ -1,0 +1,66 @@
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import UserLayout from './layouts/UserLayout';
+import AdminLayout from './layouts/AdminLayout';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// User Pages
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import ProjectList from './pages/ProjectList';
+import ProjectDetail from './pages/ProjectDetail';
+import UserDashboard from './pages/UserDashboard';
+import Services from './pages/Services';
+import Solutions from './pages/Solutions';
+import Portfolio from './pages/Portfolio';
+import Technology from './pages/Technology';
+import BlogList from './pages/BlogList';
+import BlogDetail from './pages/BlogDetail';
+
+// Admin Pages
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminProjects from './pages/admin/AdminProjects';
+import AdminBlog from './pages/admin/AdminBlog';
+import AdminScenes from './pages/admin/AdminScenes';
+import AdminModels from './pages/admin/AdminModels';
+import AdminUsers from './pages/admin/AdminUsers';
+
+const App = () => {
+  return (
+    <Routes>
+      {/* Auth Routes - No Layout */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* User Routes - With UserLayout */}
+      <Route element={<UserLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/projects" element={<ProjectList />} />
+        <Route path="/projects/:id" element={<ProjectDetail />} />
+        <Route path="/services" element={<Services />} />
+        <Route path="/solutions" element={<Solutions />} />
+        <Route path="/portfolio" element={<Portfolio />} />
+        <Route path="/technology" element={<Technology />} />
+        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog/:slug" element={<BlogDetail />} />
+        <Route path="/dashboard" element={<UserDashboard />} />
+      </Route>
+
+      {/* Admin Routes - Protected with AdminLayout */}
+      <Route element={<ProtectedRoute role="ROLE_ADMIN" />}>
+        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+        <Route element={<AdminLayout />}>
+          <Route path="/admin/dashboard" element={<AdminDashboard />} />
+          <Route path="/admin/projects" element={<AdminProjects />} />
+          <Route path="/admin/blog" element={<AdminBlog />} />
+          <Route path="/admin/scenes" element={<AdminScenes />} />
+          <Route path="/admin/models" element={<AdminModels />} />
+          <Route path="/admin/users" element={<AdminUsers />} />
+        </Route>
+      </Route>
+    </Routes>
+  );
+};
+
+export default App;

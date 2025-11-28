@@ -1,0 +1,51 @@
+{
+    "nav": {
+        "home": "Trang Chủ",
+        "projects": "Dự Án",
+        "services": "Dịch Vụ",
+        "solutions": "Giải Pháp",
+        "portfolio": "Hồ Sơ Năng Lực",
+        "technology": "Công Nghệ",
+        "blog": "Blog",
+        "about": "Giới Thiệu",
+        "login": "Đăng Nhập",
+        "register": "Đăng Ký",
+        "logout": "Đăng Xuất",
+        "dashboard": "Bảng Điều Khiển",
+        "admin": "Quản Trị"
+    },
+    "hero": {
+        "title": "Trải Nghiệm Tương Lai Của Thực Tế",
+        "subtitle": "Giải Pháp VR/AR Đắm Chìm Cho Doanh Nghiệp Và Giải Trí",
+        "subtitle_highlight": "Tương Lai",
+        "cta": "Khám Phá Dự Án"
+    },
+    "home": {
+        "featured": "Dự Án Nổi Bật",
+        "view_all": "Xem Tất Cả Dự Án"
+    },
+    "common": {
+        "loading": "Đang tải...",
+        "error": "Đã xảy ra lỗi",
+        "read_more": "Xem thêm",
+        "all": "Tất cả"
+    },
+    "banners": {
+        "services": {
+            "title": "Dịch Vụ Của Chúng Tôi",
+            "subtitle": "Giải pháp VR/AR toàn diện phù hợp với nhu cầu doanh nghiệp của bạn"
+        },
+        "solutions": {
+            "title": "Giải Pháp Ngành",
+            "subtitle": "Chuyển đổi các ngành công nghiệp với trải nghiệm thực tế ảo đắm chìm"
+        },
+        "technology": {
+            "title": "Công Nghệ Của Chúng Tôi",
+            "subtitle": "Công nghệ VR/AR tiên tiến được hỗ trợ bởi WebXR và AI"
+        },
+        "blog": {
+            "title": "Blog & Tin Tức",
+            "subtitle": "Cập nhật mới nhất về công nghệ VR/AR và nền tảng của chúng tôi"
+        }
+    }
+}
