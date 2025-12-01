@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, MapPin, Eye } from 'lucide-react';
+import { getThumbnailUrl } from '../utils/fileUtils';
 
 const ProjectList = () => {
     const { t, i18n } = useTranslation();
@@ -31,15 +32,7 @@ const ProjectList = () => {
         fetchData();
     }, []);
 
-    const getImageUrl = (url) => {
-        if (!url) return '/assets/images/vr_hero_banner.png';
-        if (url.startsWith('http')) return url;
-        if (url.startsWith('/assets')) return url;
-        if (url.includes('.png') || url.includes('.jpg')) {
-            return `/assets/images/${url}`;
-        }
-        return `http://localhost:8096/api/files/${url}`;
-    };
+    const getImageUrl = (url) => getThumbnailUrl(url);
 
     const filteredProjects = activeCategory === 'all'
         ? projects

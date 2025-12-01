@@ -203,7 +203,7 @@ const AdminProjects = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {project.thumbnailUrl ? (
                                             <img
-                                                src={project.thumbnailUrl.startsWith('http') ? project.thumbnailUrl : `http://localhost:8080${project.thumbnailUrl}`}
+                                                src={project.thumbnailUrl.startsWith('http') ? project.thumbnailUrl : `http://localhost:8096${project.thumbnailUrl}`}
                                                 alt={project.title}
                                                 className="h-12 w-12 rounded object-cover"
                                             />

@@ -68,6 +68,7 @@ public class WebSecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/files/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         // Admin endpoints
