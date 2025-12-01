@@ -108,7 +108,9 @@ const ProjectList = () => {
 
                                     {/* Category Tag */}
                                     <div className="absolute top-4 left-4 bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
-                                        {project.category?.nameEn || "VR"}
+                                        {i18n.language === 'vi'
+                                            ? (project.category?.nameVi || "Không rõ")
+                                            : (project.category?.nameEn || "Unknown")}
                                     </div>
 
                                     {/* Badges */}

@@ -30,6 +30,12 @@
         "read_more": "Xem thêm",
         "all": "Tất cả"
     },
+    "warning": "Cảnh báo",
+    "model": {
+        "replace_warning": "Tải mô hình 3D mới sẽ thay thế mô hình hiện tại.",
+        "replace": "Thay thế mô hình",
+        "raw_url_notice": "URL phải là link RAW trỏ trực tiếp đến file .glb/.gltf. Ví dụ:"
+    },
     "banners": {
         "services": {
             "title": "Dịch Vụ Của Chúng Tôi",

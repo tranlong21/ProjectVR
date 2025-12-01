@@ -29,6 +29,12 @@
     "read_more": "Read More",
     "all": "All"
   },
+  "warning": "Warning",
+  "model": {
+    "replace_warning": "Uploading a new model will replace the existing one.",
+    "replace": "Replace Model",
+    "raw_url_notice": "URL must be a RAW direct link to a .glb/.gltf file. For example:"
+  },
   "banners": {
     "services": {
       "title": "Our Services",

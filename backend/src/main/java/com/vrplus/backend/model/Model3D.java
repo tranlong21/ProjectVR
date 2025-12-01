@@ -19,10 +19,15 @@ public class Model3D {
 
     private String name;
     private String category;
-    private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionVi;
+
+    @Column(columnDefinition = "TEXT")
+    private String descriptionEn;
+
     private String format;
     private String fileUrl;
-
     private String modelUrl;
     private String previewImageUrl;
 

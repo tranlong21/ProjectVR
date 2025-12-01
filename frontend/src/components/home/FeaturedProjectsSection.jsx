@@ -55,9 +55,12 @@ const FeaturedProjectsSection = () => {
                     <div className="flex flex-wrap gap-2">
                         <button
                             onClick={() => setActiveCategory('all')}
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === 'all' ? 'bg-[var(--accent-purple)] text-white shadow-lg' : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'}`}
+                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === 'all'
+                                    ? 'bg-[var(--accent-purple)] text-white shadow-lg'
+                                    : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'
+                                }`}
                         >
-                            All
+                            {t('common.all')}
                         </button>
                         {categories.map(cat => (
                             <button
@@ -83,8 +86,10 @@ const FeaturedProjectsSection = () => {
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
                                     />
-                                    <div className="absolute top-4 right-4 z-20 bg-[var(--accent-purple)] text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">
-                                        {project.category?.nameEn || "VR"}
+                                    <div className="absolute top-4 left-4 bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                                        {i18n.language === 'vi'
+                                            ? (project.category?.nameVi || "Không rõ")
+                                            : (project.category?.nameEn || "Unknown")}
                                     </div>
 
                                     {/* Hover Overlay */}

@@ -41,18 +41,17 @@ public class AdminModelController {
             @RequestParam(value = "file", required = false) MultipartFile file,
             @RequestParam(value = "modelUrl", required = false) String modelUrl,
             @RequestParam("name") String name,
-            @RequestParam(value = "description", required = false) String description,
             @RequestParam(value = "descriptionVi", required = false) String descriptionVi,
-            @RequestParam(value = "descriptionEn", required = false) String descriptionEn) {
+            @RequestParam(value = "descriptionEn", required = false) String descriptionEn
+    ) {
         try {
-            // Verify project exists
+            // Validate project exists
             Project project = projectRepository.findById(projectId)
                     .orElseThrow(() -> new RuntimeException("Project not found"));
 
-            // Check if model already exists for this project
+            // Remove old model if exists (only 1 model per project)
             List<Model3D> existingModels = model3DRepository.findByProjectId(projectId);
             if (!existingModels.isEmpty()) {
-                // Delete old models
                 for (Model3D oldModel : existingModels) {
                     if (oldModel.getFileUrl() != null && oldModel.getFileUrl().startsWith("/uploads")) {
                         fileStorageService.deleteFile(oldModel.getFileUrl());
@@ -61,33 +60,34 @@ public class AdminModelController {
                 }
             }
 
-            String finalFileUrl = null;
+            String finalFileUrl;
             String format = "UNKNOWN";
 
+            // Upload file
             if (file != null && !file.isEmpty()) {
-                // Validate 3D model file
                 if (!fileStorageService.isValid3DModelFile(file)) {
                     return ResponseEntity.badRequest()
                             .body("Invalid 3D model file. Only .glb and .gltf are supported.");
                 }
+
                 finalFileUrl = fileStorageService.storeFile(file, "models3d");
                 format = file.getOriginalFilename().endsWith(".glb") ? "GLB" : "GLTF";
+
             } else if (modelUrl != null && !modelUrl.isEmpty()) {
+                // External URL
                 finalFileUrl = modelUrl;
                 format = "URL";
+
             } else {
                 return ResponseEntity.badRequest().body("Either file or modelUrl must be provided");
             }
 
-            // Create model record
+            // Create new model record
             Model3D model = Model3D.builder()
                     .project(project)
                     .name(name)
-                    .description(description)
-                    // .descriptionVi(descriptionVi) // Assuming these fields are added to Model3D
-                    // entity
-                    // .descriptionEn(descriptionEn) // Assuming these fields are added to Model3D
-                    // entity
+                    .descriptionVi(descriptionVi)
+                    .descriptionEn(descriptionEn)
                     .format(format)
                     .fileUrl(finalFileUrl)
                     .modelUrl(finalFileUrl)
@@ -95,15 +95,17 @@ public class AdminModelController {
 
             Model3D savedModel = model3DRepository.save(model);
 
-            // Update project flag
+            // Update project.has3d
             project.setHas3d(true);
             projectRepository.save(project);
 
             return ResponseEntity.ok(savedModel);
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             return ResponseEntity.internalServerError().body("Failed to upload model: " + e.getMessage());
         }
     }
+
 
     @DeleteMapping("/models/{id}")
     public ResponseEntity<?> deleteModel(@PathVariable Long id) {

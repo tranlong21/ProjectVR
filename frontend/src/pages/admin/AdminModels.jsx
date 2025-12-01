@@ -1,16 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Upload, Trash2, Box, ArrowLeft, ExternalLink } from 'lucide-react';
+import { useTranslation } from "react-i18next";
+
 
 const AdminModels = () => {
     const [projects, setProjects] = useState([]);
     const [selectedProject, setSelectedProject] = useState(null);
     const [models, setModels] = useState([]);
     const [loading, setLoading] = useState(true);
+    const { t } = useTranslation();
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [uploadFormData, setUploadFormData] = useState({
         name: '',
-        description: '',
+        descriptionVi: '',
+        descriptionEn: '',
         modelUrl: ''
     });
     const [modelFile, setModelFile] = useState(null);
@@ -64,11 +68,18 @@ const AdminModels = () => {
 
     const handleUploadSubmit = async (e) => {
         e.preventDefault();
+
         try {
             const formData = new FormData();
-            formData.append('name', uploadFormData.name);
-            formData.append('description', uploadFormData.description);
 
+            // Required
+            formData.append('name', uploadFormData.name);
+
+            // New fields
+            formData.append('descriptionVi', uploadFormData.descriptionVi || "");
+            formData.append('descriptionEn', uploadFormData.descriptionEn || "");
+
+            // Upload type
             if (uploadType === 'file' && modelFile) {
                 formData.append('file', modelFile);
             } else if (uploadType === 'url' && uploadFormData.modelUrl) {
@@ -79,16 +90,24 @@ const AdminModels = () => {
             }
 
             await api.post(`/admin/projects/${selectedProject.id}/models`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
+                headers: { "Content-Type": "multipart/form-data" }
             });
 
+            // Reset UI
             setIsUploadModalOpen(false);
-            setUploadFormData({ name: '', description: '', modelUrl: '' });
+            setUploadFormData({
+                name: '',
+                descriptionVi: '',
+                descriptionEn: '',
+                modelUrl: ''
+            });
             setModelFile(null);
+
             fetchModels(selectedProject.id);
+
         } catch (error) {
-            console.error('Error uploading model:', error);
-            alert('Failed to upload model: ' + (error.response?.data || error.message));
+            console.error("Error uploading model:", error);
+            alert("Failed to upload model: " + (error.response?.data || error.message));
         }
     };
 
@@ -150,7 +169,17 @@ const AdminModels = () => {
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No 3D Model Found</h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-6">This project doesn't have a 3D model yet.</p>
                     <button
-                        onClick={() => setIsUploadModalOpen(true)}
+                        onClick={() => {
+                            if (models.length > 0) {
+                                setUploadFormData({
+                                    name: models[0].name || '',
+                                    descriptionVi: models[0].descriptionVi || '',
+                                    descriptionEn: models[0].descriptionEn || '',
+                                    modelUrl: models[0].modelUrl || ''
+                                });
+                            }
+                            setIsUploadModalOpen(true);
+                        }}
                         className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg inline-flex items-center gap-2"
                     >
                         <Upload size={20} />
@@ -167,10 +196,20 @@ const AdminModels = () => {
                             </div>
                             <div className="flex gap-2">
                                 <button
-                                    onClick={() => setIsUploadModalOpen(true)}
+                                    onClick={() => {
+                                        const m = models[0];
+                                        setUploadFormData({
+                                            name: m?.name || "",
+                                            descriptionVi: m?.descriptionVi || "",
+                                            descriptionEn: m?.descriptionEn || "",
+                                            modelUrl: m?.modelUrl || ""
+                                        });
+                                        setUploadType(m?.fileUrl ? "file" : "url");
+                                        setIsUploadModalOpen(true);
+                                    }}
                                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                                 >
-                                    Replace Model
+                                    {t("model.replace")}
                                 </button>
                                 <button
                                     onClick={() => handleDelete(models[0].id)}
@@ -219,12 +258,15 @@ const AdminModels = () => {
                         </div>
 
                         <form onSubmit={handleUploadSubmit} className="p-6 space-y-4">
+
                             {models.length > 0 && (
                                 <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded text-sm mb-4">
-                                    Warning: Uploading a new model will replace the existing one.
+                                    <p className="font-semibold">{t("warning")}</p>
+                                    <p>- {t("model.replace_warning")}</p>
                                 </div>
                             )}
 
+                            {/* Model Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Model Name</label>
                                 <input
@@ -237,17 +279,31 @@ const AdminModels = () => {
                                 />
                             </div>
 
+                            {/* Description VI */}
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (VI)</label>
                                 <textarea
-                                    name="description"
-                                    value={uploadFormData.description}
+                                    name="descriptionVi"
+                                    value={uploadFormData.descriptionVi}
                                     onChange={handleInputChange}
                                     rows="3"
                                     className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                 />
                             </div>
 
+                            {/* Description EN */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (EN)</label>
+                                <textarea
+                                    name="descriptionEn"
+                                    value={uploadFormData.descriptionEn}
+                                    onChange={handleInputChange}
+                                    rows="3"
+                                    className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
+                                />
+                            </div>
+
+                            {/* Upload Type */}
                             <div className="flex gap-4 mb-2">
                                 <label className="flex items-center">
                                     <input
@@ -269,9 +325,12 @@ const AdminModels = () => {
                                 </label>
                             </div>
 
+                            {/* Upload File or URL */}
                             {uploadType === 'file' ? (
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">File (.glb, .gltf)</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        File (.glb, .gltf)
+                                    </label>
                                     <input
                                         type="file"
                                         onChange={handleFileChange}
@@ -288,13 +347,28 @@ const AdminModels = () => {
                                         name="modelUrl"
                                         value={uploadFormData.modelUrl}
                                         onChange={handleInputChange}
-                                        placeholder="https://example.com/model.glb"
+                                        placeholder="https://raw.githubusercontent.com/.../model.glb"
                                         className="w-full p-2 border rounded dark:bg-slate-700 dark:border-slate-600 dark:text-white"
                                         required={uploadType === 'url'}
                                     />
+
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                        {t("model.raw_url_notice")}
+                                        <br />
+
+                                        <a
+                                            href="https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="text-blue-600 underline hover:text-blue-800"
+                                        >
+                                            https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/Duck/glTF/Duck.gltf
+                                        </a>
+                                    </p>
                                 </div>
                             )}
 
+                            {/* Modal Buttons */}
                             <div className="flex justify-end gap-4 pt-4">
                                 <button
                                     type="button"

@@ -6,6 +6,8 @@ import Viewer3D from '../components/Viewer3D';
 import { useTranslation } from 'react-i18next';
 import { Info, MapPin, Layers, Image as ImageIcon } from 'lucide-react';
 import { getThumbnailUrl, getPanoramaUrl } from '../utils/fileUtils';
+import { Volume2, VolumeX } from "lucide-react";
+
 
 const ProjectDetail = () => {
     const { id } = useParams();
@@ -15,6 +17,15 @@ const ProjectDetail = () => {
     const [model3d, setModel3d] = useState(null);
     const [activeTab, setActiveTab] = useState('info');
     const [loading, setLoading] = useState(true);
+
+    const modelDescription =
+        i18n.language === "vi"
+            ? (model3d?.descriptionVi && model3d.descriptionVi.trim() !== ""
+                ? model3d.descriptionVi
+                : "Không có mô tả tiếng Việt.")
+            : (model3d?.descriptionEn && model3d.descriptionEn.trim() !== ""
+                ? model3d.descriptionEn
+                : "No English description available.");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -203,18 +214,38 @@ const ProjectDetail = () => {
                             </div>
                         )}
 
+                        {/* ==== TAB 3D ==== */}
                         {activeTab === '3d' && project.has3d && (
-                            <div className="h-[500px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900">
-                                {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
-                                    <Viewer3D modelUrl={model3d.modelUrl || model3d.fileUrl} />
-                                ) : (
-                                    <div className="flex items-center justify-center h-full text-white">
-                                        <div className="text-center">
-                                            <p className="text-xl font-bold mb-2">3D Model Not Available</p>
-                                            <p className="text-sm">The 3D model for this project is being prepared.</p>
+                            <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
+
+                                {/* ⭐ MÔ TẢ 3D */}
+                                {/* <div className="mb-3 text-white">
+                                    <p className="font-semibold mb-1">
+                                        {i18n.language === 'vi' ? "Mô tả mô hình 3D" : "3D Model Description"}
+                                    </p>
+
+                                    <p className="text-sm text-gray-300 flex-1">
+                                        {modelDescription}
+                                    </p>
+                                </div> */}
+
+                                {/* ⭐ VIEWER 3D */}
+                                <div className="w-full h-[460px] rounded-xl overflow-hidden">
+                                    {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
+                                        <Viewer3D
+                                            modelUrl={model3d.modelUrl || model3d.fileUrl}
+                                            description={modelDescription}
+                                            lang={i18n.language}
+                                        />
+                                    ) : (
+                                        <div className="flex items-center justify-center h-full text-white">
+                                            <div className="text-center">
+                                                <p className="text-xl font-bold mb-2">3D Model Not Available</p>
+                                                <p className="text-sm">The 3D model for this project is being prepared.</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
                         )}
 
@@ -249,7 +280,8 @@ const ProjectDetail = () => {
                                 <span className="font-medium text-[var(--text-primary)]">{i18n.language === 'vi' ? project.category?.nameVi : project.category?.nameEn}</span>
                             </li>
                         </ul>
-                        <button className="w-full mt-6 bg-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/90 text-white font-bold py-3 rounded-lg transition-colors shadow-lg shadow-blue-500/30">
+                        <button className="w-full mt-6 bg-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/90 
+                                            text-[var(--primary)] font-bold py-3 rounded-lg transition-colors shadow-lg shadow-blue-500/30">
                             Contact Us
                         </button>
                     </div>
