@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
+import { getThumbnailUrl } from '../../utils/fileUtils';
 
 const BlogsSection = () => {
     const [blogs, setBlogs] = useState([]);
@@ -42,7 +43,7 @@ const BlogsSection = () => {
                             <div className="glass-panel rounded-2xl overflow-hidden h-full flex flex-col hover:-translate-y-2 transition-transform duration-300 border border-[var(--border-color)] hover:border-[var(--accent-purple)]/50 bg-[var(--card-bg)]">
                                 <div className="relative h-48 overflow-hidden">
                                     <img
-                                        src={blog.thumbnailUrl ? `http://localhost:8096/api/files/${blog.thumbnailUrl}` : '/assets/images/vr_hero_banner.png'}
+                                        src={getThumbnailUrl(blog.thumbnailUrl)}
                                         alt={blog.title}
                                         className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                                         onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}

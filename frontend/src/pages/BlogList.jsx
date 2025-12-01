@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ArrowRight } from 'lucide-react';
 import PageBanner from '../components/PageBanner';
+import { getThumbnailUrl } from '../utils/fileUtils';
 
 const BlogList = () => {
     const { t, i18n } = useTranslation();
@@ -39,7 +40,7 @@ const BlogList = () => {
                         <Link key={post.id} to={`/blog/${post.slug}`} className="group flex flex-col h-full glass-panel rounded-xl overflow-hidden hover:-translate-y-2 transition-transform duration-300">
                             <div className="h-48 overflow-hidden">
                                 <img
-                                    src={post.thumbnailUrl || '/assets/images/vr_hero_banner.png'}
+                                    src={getThumbnailUrl(post.thumbnailUrl)}
                                     alt={post.titleVi}
                                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                                     onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import api from '../../services/api';
+import { getThumbnailUrl } from '../../utils/fileUtils';
 
 const FeaturedProjectsSection = () => {
     const { t, i18n } = useTranslation();
@@ -36,12 +37,7 @@ const FeaturedProjectsSection = () => {
         }
     }, [activeCategory, projects]);
 
-    const getImageUrl = (url) => {
-        if (!url) return '/assets/images/vr_hero_banner.png';
-        if (url.startsWith('http')) return url;
-        if (url.startsWith('/assets')) return url;
-        return `http://localhost:8096/api/files/${url}`;
-    };
+    const getImageUrl = (url) => getThumbnailUrl(url);
 
     return (
         <section className="py-24 bg-[var(--bg-primary)] relative transition-colors duration-300">

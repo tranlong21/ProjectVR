@@ -4,6 +4,7 @@ import api from '../services/api';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { getThumbnailUrl } from '../utils/fileUtils';
 
 const BlogDetail = () => {
     const { slug } = useParams();
@@ -48,7 +49,7 @@ const BlogDetail = () => {
 
                 <div className="rounded-2xl overflow-hidden mb-12 shadow-lg">
                     <img
-                        src={post.thumbnailUrl || '/assets/images/vr_hero_banner.png'}
+                        src={getThumbnailUrl(post.thumbnailUrl)}
                         alt={title}
                         className="w-full h-auto object-cover max-h-[500px]"
                         onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}

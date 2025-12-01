@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import Modal from '../../components/admin/Modal';
+import { getThumbnailUrl } from '../../utils/fileUtils';
+
 
 const AdminBlog = () => {
     const [posts, setPosts] = useState([]);
@@ -9,6 +11,9 @@ const AdminBlog = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingPost, setEditingPost] = useState(null);
+    const [thumbnailFile, setThumbnailFile] = useState(null);
+    const [previewUrl, setPreviewUrl] = useState(null);
+
 
     // Form states
     const [formData, setFormData] = useState({
@@ -46,6 +51,7 @@ const AdminBlog = () => {
                 contentEn: post.contentEn || '',
                 thumbnailUrl: post.thumbnailUrl || '/assets/images/vr_hero_banner.png'
             });
+            setPreviewUrl(getThumbnailUrl(post.thumbnailUrl));
         } else {
             setEditingPost(null);
             setFormData({
@@ -56,6 +62,7 @@ const AdminBlog = () => {
                 contentEn: '',
                 thumbnailUrl: '/assets/images/vr_hero_banner.png'
             });
+            setPreviewUrl(null);
         }
         setShowModal(true);
     };
@@ -68,19 +75,43 @@ const AdminBlog = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
+
         try {
+            let blogId = null;
+
+            // 1) Tạo mới hoặc cập nhật bài viết
             if (editingPost) {
-                await api.put(`/blog/${editingPost.id}`, formData);
+                const res = await api.put(`/admin/blogs/${editingPost.id}`, formData);
+                blogId = res.data.id;
             } else {
-                await api.post('/blog', formData);
+                const res = await api.post(`/admin/blogs`, formData);
+                blogId = res.data.id;
             }
 
-            fetchPosts();
+            // 2) Nếu có chọn ảnh thì upload thumbnail
+            if (thumbnailFile) {
+                const fd = new FormData();
+                fd.append("file", thumbnailFile);
+
+                const uploadRes = await api.post(
+                    `/admin/blogs/${blogId}/thumbnail`,
+                    fd,
+                    { headers: { "Content-Type": "multipart/form-data" } }
+                );
+
+                // Cập nhật luôn thumbnail URL
+                formData.thumbnailUrl = uploadRes.data;
+            }
+
+            // 3) Refresh
+            await fetchPosts();
             handleCloseModal();
-            alert(editingPost ? 'Blog post updated successfully!' : 'Blog post created successfully!');
+
+            alert(editingPost ? "Blog updated successfully!" : "Blog created successfully!");
+
         } catch (error) {
-            console.error('Error saving blog post:', error);
-            alert('Failed to save blog post');
+            console.error("Error saving blog post:", error);
+            alert("Failed to save blog post");
         } finally {
             setLoading(false);
         }
@@ -106,6 +137,30 @@ const AdminBlog = () => {
             [name]: value
         }));
     };
+
+    const handleThumbnailSelect = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setThumbnailFile(file);
+
+            const tempUrl = URL.createObjectURL(file);
+            setPreviewUrl(tempUrl);
+        }
+    };
+
+    const uploadThumbnail = async (blogId) => {
+        if (!thumbnailFile) return;
+
+        const fd = new FormData();
+        fd.append("file", thumbnailFile);
+
+        const response = await api.post(`/admin/blogs/${blogId}/thumbnail`, fd, {
+            headers: { "Content-Type": "multipart/form-data" }
+        });
+
+        return response.data; // trả về thumbnail URL
+    };
+
 
     const filteredPosts = posts.filter(p =>
         p.titleVi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -263,6 +318,25 @@ const AdminBlog = () => {
                             placeholder="Markdown supported"
                             className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thumbnail</label>
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleThumbnailSelect}
+                            className="dark:text-gray-200"
+                        />
+
+                        {(previewUrl || formData.thumbnailUrl) && (
+                            <img
+                                src={previewUrl || getThumbnailUrl(formData.thumbnailUrl)}
+                                alt="Preview"
+                                className="mt-3 w-40 rounded border"
+                                onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
+                            />
+                        )}
                     </div>
 
                     <div className="flex justify-end space-x-3 pt-4">

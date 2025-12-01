@@ -12,36 +12,40 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8096';
  * @returns {string} - Full URL to the resource
  */
 export const getFileUrl = (url, type = 'image') => {
-    if (!url) {
+    // Handle null, undefined, or empty strings
+    if (!url || url.trim() === '') {
         // Return default placeholder based on type
         if (type === 'panorama') return '/assets/images/vr_hero_banner.png';
         if (type === 'model') return null;
         return '/assets/images/vr_hero_banner.png';
     }
 
+    // Trim whitespace
+    const cleanUrl = url.trim();
+
     // Already an absolute URL (http/https)
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url;
+    if (cleanUrl.startsWith('http://') || cleanUrl.startsWith('https://')) {
+        return cleanUrl;
     }
 
-    // Local asset path
-    if (url.startsWith('/assets')) {
-        return url;
+    // Local asset path - return as-is (browser will resolve from public folder)
+    if (cleanUrl.startsWith('/assets/') || cleanUrl.startsWith('assets/')) {
+        return cleanUrl.startsWith('/') ? cleanUrl : `/${cleanUrl}`;
     }
 
     // Backend API file path
-    if (url.startsWith('/api/files/')) {
-        return `${API_BASE_URL}${url}`;
+    if (cleanUrl.startsWith('/api/files/')) {
+        return `${API_BASE_URL}${cleanUrl}`;
     }
 
     // Backend uploads path (direct static serving)
-    if (url.startsWith('/uploads/')) {
-        return `${API_BASE_URL}${url}`;
+    if (cleanUrl.startsWith('/uploads/')) {
+        return `${API_BASE_URL}${cleanUrl}`;
     }
 
     // Filename only - assume it's served via /api/files/
     // This handles cases like: "7c717428-bc9c-4bf0-9712-337ffbcc1729.jpg"
-    return `${API_BASE_URL}/api/files/${url}`;
+    return `${API_BASE_URL}/api/files/${cleanUrl}`;
 };
 
 /**
