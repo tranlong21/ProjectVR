@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import * as blogPostsService from '../services/blogPosts.service';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ArrowRight } from 'lucide-react';
 import PageBanner from '../components/PageBanner';
@@ -14,8 +14,8 @@ const BlogList = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                const response = await api.get('/blog');
-                setPosts(response.data);
+                const data = await blogPostsService.getAll();
+                setPosts(data);
             } catch (error) {
                 console.error(error);
             } finally {

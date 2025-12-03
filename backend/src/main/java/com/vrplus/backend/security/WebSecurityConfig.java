@@ -66,7 +66,7 @@ public class WebSecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/models/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/models3d/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/files/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**", "/api/blog*/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()

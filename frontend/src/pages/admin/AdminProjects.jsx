@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as projectsService from '../../services/projects.service';
+import * as categoriesService from '../../services/categories.service';
+import * as adminProjects from "../../services/projects.admin.service";
+
 import { Plus, Edit, Trash2, Search, Eye, Image as ImageIcon } from 'lucide-react';
 
 const AdminProjects = () => {
@@ -32,8 +35,8 @@ const AdminProjects = () => {
 
     const fetchProjects = async () => {
         try {
-            const response = await api.get('/projects');
-            setProjects(response.data);
+            const data = await projectsService.getAll();
+            setProjects(data);
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
@@ -43,8 +46,8 @@ const AdminProjects = () => {
 
     const fetchCategories = async () => {
         try {
-            const response = await api.get('/categories');
-            setCategories(response.data);
+            const data = await categoriesService.getAll();
+            setCategories(data);
         } catch (error) {
             console.error('Error fetching categories:', error);
         }
@@ -111,27 +114,26 @@ const AdminProjects = () => {
             };
 
             if (currentProject) {
-                response = await api.put(`/admin/projects/${currentProject.id}`, projectData);
+                response = await projectsService.update(currentProject.id, projectData);
             } else {
-                response = await api.post('/admin/projects', projectData);
+                response = await projectsService.create(projectData);
             }
 
-            const projectId = response.data.id;
+            // Note: response might be the data object directly if service returns response.data
+            // Assuming service returns response.data, so response IS the project object.
+            // But let's check service implementation: "return response.data;". Yes.
+            const projectId = response.id;
 
             // Upload thumbnail if selected
             if (thumbnailFile) {
                 const formData = new FormData();
                 formData.append('file', thumbnailFile);
-                await api.post(`/admin/projects/${projectId}/thumbnail`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await projectsService.uploadThumbnail(projectId, formData);
             } else if (formData.thumbnailUrl && formData.thumbnailUrl !== currentProject?.thumbnailUrl) {
                 // If URL changed but no file, update URL via endpoint
                 const formData = new FormData();
                 formData.append('url', formData.thumbnailUrl);
-                await api.post(`/admin/projects/${projectId}/thumbnail`, formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
+                await projectsService.uploadThumbnail(projectId, formData);
             }
 
             setIsModalOpen(false);
@@ -145,7 +147,7 @@ const AdminProjects = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this project?')) {
             try {
-                await api.delete(`/admin/projects/${id}`);
+                await projectsService.remove(id);
                 fetchProjects();
             } catch (error) {
                 console.error('Error deleting project:', error);

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import api from '../services/api';
+import * as blogPostsService from '../services/blogPosts.service';
 import { useTranslation } from 'react-i18next';
 import { Calendar, ArrowLeft } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -15,8 +15,8 @@ const BlogDetail = () => {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const response = await api.get(`/blog/${slug}`);
-                setPost(response.data);
+                const data = await blogPostsService.getById(slug);
+                setPost(data);
             } catch (error) {
                 console.error(error);
             } finally {

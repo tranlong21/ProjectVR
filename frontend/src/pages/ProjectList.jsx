@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api';
+import * as categoriesService from '../services/categories.service';
+import * as projectsService from '../services/projects.service';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, MapPin, Eye } from 'lucide-react';
 import { getThumbnailUrl } from '../utils/fileUtils';
@@ -16,12 +17,12 @@ const ProjectList = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [catsRes, projsRes] = await Promise.all([
-                    api.get('/categories'),
-                    api.get('/projects')
+                const [cats, projs] = await Promise.all([
+                    categoriesService.getAll(),
+                    projectsService.getAll()
                 ]);
-                setCategories(catsRes.data);
-                setProjects(projsRes.data);
+                setCategories(cats);
+                setProjects(projs);
             } catch (error) {
                 console.error("Error fetching data:", error);
                 setError("Failed to load projects. Please ensure the backend is running.");

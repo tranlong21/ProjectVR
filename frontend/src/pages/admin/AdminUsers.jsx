@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as usersService from '../../services/users.service';
 import { Trash2, Lock, Unlock, User } from 'lucide-react';
 
 const AdminUsers = () => {
@@ -12,8 +12,8 @@ const AdminUsers = () => {
 
     const fetchUsers = async () => {
         try {
-            const response = await api.get('/admin/users');
-            setUsers(response.data);
+            const data = await usersService.getAll();
+            setUsers(data);
         } catch (error) {
             console.error('Error fetching users:', error);
         } finally {
@@ -24,7 +24,7 @@ const AdminUsers = () => {
     const handleStatusChange = async (userId, currentStatus) => {
         const newStatus = currentStatus === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         try {
-            await api.patch(`/admin/users/${userId}/status`, { status: newStatus });
+            await usersService.updateStatus(userId, newStatus);
             fetchUsers();
         } catch (error) {
             console.error('Error updating status:', error);
@@ -34,7 +34,7 @@ const AdminUsers = () => {
 
     const handleRoleChange = async (userId, newRole) => {
         try {
-            await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+            await usersService.updateRole(userId, newRole);
             fetchUsers();
         } catch (error) {
             console.error('Error updating role:', error);
@@ -45,7 +45,7 @@ const AdminUsers = () => {
     const handleDelete = async (userId) => {
         if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
             try {
-                await api.delete(`/admin/users/${userId}`);
+                await usersService.remove(userId);
                 fetchUsers();
             } catch (error) {
                 console.error('Error deleting user:', error);

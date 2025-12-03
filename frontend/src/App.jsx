@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
+import useAuthStore from './stores/authStore';
+
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -27,40 +29,59 @@ import AdminModels from './pages/admin/AdminModels';
 import AdminUsers from './pages/admin/AdminUsers';
 
 const App = () => {
-  return (
-    <Routes>
-      {/* Auth Routes - No Layout */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
 
-      {/* User Routes - With UserLayout */}
-      <Route element={<UserLayout />}>
-        <Route path="/" element={<Home />} />
-        <Route path="/projects" element={<ProjectList />} />
-        <Route path="/projects/:id" element={<ProjectDetail />} />
-        <Route path="/services" element={<Services />} />
-        <Route path="/solutions" element={<Solutions />} />
-        <Route path="/portfolio" element={<Portfolio />} />
-        <Route path="/technology" element={<Technology />} />
-        <Route path="/blog" element={<BlogList />} />
-        <Route path="/blog/:slug" element={<BlogDetail />} />
-        <Route path="/dashboard" element={<UserDashboard />} />
-      </Route>
+    // 🔥 Không destructure setState từ hook!
+    // 🔥 Phải dùng setState từ chính store object
+    const authStore = useAuthStore;
 
-      {/* Admin Routes - Protected with AdminLayout */}
-      <Route element={<ProtectedRoute role="ROLE_ADMIN" />}>
-        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route element={<AdminLayout />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/projects" element={<AdminProjects />} />
-          <Route path="/admin/blog" element={<AdminBlog />} />
-          <Route path="/admin/scenes" element={<AdminScenes />} />
-          <Route path="/admin/models" element={<AdminModels />} />
-          <Route path="/admin/users" element={<AdminUsers />} />
-        </Route>
-      </Route>
-    </Routes>
-  );
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (token && user) {
+            authStore.setState({
+                token,
+                user: JSON.parse(user),
+                isAuthenticated: true,
+            });
+        }
+    }, []);
+
+    return (
+        <Routes>
+            {/* Auth Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+
+            {/* USER ROUTES */}
+            <Route element={<UserLayout />}>
+                <Route path="/" element={<Home />} />
+                <Route path="/projects" element={<ProjectList />} />
+                <Route path="/projects/:id" element={<ProjectDetail />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/solutions" element={<Solutions />} />
+                <Route path="/portfolio" element={<Portfolio />} />
+                <Route path="/technology" element={<Technology />} />
+                <Route path="/blog" element={<BlogList />} />
+                <Route path="/blog/:slug" element={<BlogDetail />} />
+                <Route path="/dashboard" element={<UserDashboard />} />
+            </Route>
+
+            {/* ADMIN ROUTES */}
+            <Route element={<ProtectedRoute role="ROLE_ADMIN" />}>
+                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+                <Route element={<AdminLayout />}>
+                    <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                    <Route path="/admin/projects" element={<AdminProjects />} />
+                    <Route path="/admin/blog" element={<AdminBlog />} />
+                    <Route path="/admin/scenes" element={<AdminScenes />} />
+                    <Route path="/admin/models" element={<AdminModels />} />
+                    <Route path="/admin/users" element={<AdminUsers />} />
+                </Route>
+            </Route>
+        </Routes>
+    );
 };
 
 export default App;

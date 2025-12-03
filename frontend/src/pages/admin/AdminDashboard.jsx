@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as projectsService from '../../services/projects.service';
 import { FolderOpen, FileText, Image, Box, Plus, Upload, Settings } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -19,17 +19,17 @@ const AdminDashboard = () => {
     const fetchDashboardData = async () => {
         try {
             // Only fetch public data - no authentication required
-            const projectsRes = await api.get('/projects');
+            const projects = await projectsService.getAll();
 
             setStats(prevStats => prevStats.map(stat => {
                 if (stat.title === "Total Projects") {
-                    return { ...stat, value: projectsRes.data.length };
+                    return { ...stat, value: projects.length };
                 }
                 // Other stats would be fetched/calculated similarly
                 return stat;
             }));
 
-            setRecentProjects(projectsRes.data.slice(0, 5));
+            setRecentProjects(projects.slice(0, 5));
         } catch (error) {
             console.error('Error fetching dashboard data:', error);
             setStats(prevStats => prevStats.map(stat => ({ ...stat, value: 0 })));

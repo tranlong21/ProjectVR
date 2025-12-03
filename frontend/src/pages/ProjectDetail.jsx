@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import api from '../services/api';
+import * as projectsService from '../services/projects.service';
+import * as scenesService from '../services/scenes.service';
+import * as models3dService from '../services/models3d.service';
 import Viewer360 from '../components/Viewer360';
 import Viewer3D from '../components/Viewer3D';
 import { useTranslation } from 'react-i18next';
@@ -31,8 +33,7 @@ const ProjectDetail = () => {
         const fetchData = async () => {
             try {
                 // Fetch project details
-                const projectRes = await api.get(`/projects/${id}`);
-                const proj = projectRes.data;
+                const proj = await projectsService.getById(id);
                 setProject(proj);
 
                 // Set initial active tab based on content availability
@@ -43,16 +44,16 @@ const ProjectDetail = () => {
 
                 // Fetch scenes if project has 360
                 if (proj.has360) {
-                    const scenesRes = await api.get(`/scenes/project/${id}`);
-                    setScenes(scenesRes.data);
+                    const scenesData = await scenesService.getByProjectId(id);
+                    setScenes(scenesData);
                 }
 
                 // Fetch 3D model if project has 3D
                 if (proj.has3d) {
                     try {
-                        const modelRes = await api.get(`/models3d/project/${id}`);
-                        if (modelRes.data && modelRes.data.length > 0) {
-                            setModel3d(modelRes.data[0]); // Get first model
+                        const modelsData = await models3dService.getByProjectId(id);
+                        if (modelsData && modelsData.length > 0) {
+                            setModel3d(modelsData[0]); // Get first model
                         }
                     } catch (error) {
                         console.error('Error fetching 3D model:', error);

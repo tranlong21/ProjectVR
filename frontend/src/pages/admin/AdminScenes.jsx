@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as projectsService from '../../services/projects.service';
+import * as scenesService from '../../services/scenes.service';
+import * as hotspotsService from '../../services/hotspots.service';
 import { Plus, Edit, Trash2, MapPin, Image as ImageIcon, ArrowLeft } from 'lucide-react';
 
 const AdminScenes = () => {
@@ -53,8 +55,8 @@ const AdminScenes = () => {
 
     const fetchProjects = async () => {
         try {
-            const response = await api.get('/projects');
-            setProjects(response.data);
+            const data = await projectsService.getAll();
+            setProjects(data);
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
@@ -64,9 +66,9 @@ const AdminScenes = () => {
 
     const fetchScenes = async (projectId) => {
         try {
-            const response = await api.get(`/admin/scenes/project/${projectId}`);
+            const data = await scenesService.getByProjectId(projectId);
             // Sort by orderIndex to ensure correct display order
-            const sortedScenes = response.data.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
+            const sortedScenes = data.sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0));
             setScenes(sortedScenes);
         } catch (error) {
             console.error('Error fetching scenes:', error);
@@ -137,10 +139,8 @@ const AdminScenes = () => {
             if (uploadType === 'file' && panoramaFile) {
                 const formData = new FormData();
                 formData.append('file', panoramaFile);
-                const uploadResponse = await api.post('/files/upload/scenes', formData, {
-                    headers: { 'Content-Type': 'multipart/form-data' }
-                });
-                panoramaUrl = uploadResponse.data.fileUrl || uploadResponse.data;
+                const uploadResponse = await scenesService.uploadPanorama(formData);
+                panoramaUrl = uploadResponse.fileUrl || uploadResponse;
             }
 
             // Validate panorama URL
@@ -164,9 +164,9 @@ const AdminScenes = () => {
             console.log('Submitting scene data:', sceneData);
 
             if (currentScene) {
-                await api.put(`/admin/scenes/${currentScene.id}`, sceneData);
+                await scenesService.update(currentScene.id, sceneData);
             } else {
-                await api.post('/admin/scenes', sceneData);
+                await scenesService.create(sceneData);
             }
 
             setIsSceneModalOpen(false);
@@ -184,7 +184,7 @@ const AdminScenes = () => {
     const handleSceneDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this scene?')) {
             try {
-                await api.delete(`/admin/scenes/${id}`);
+                await scenesService.remove(id);
                 fetchScenes(selectedProject.id);
             } catch (error) {
                 console.error('Error deleting scene:', error);
@@ -196,8 +196,8 @@ const AdminScenes = () => {
     // Hotspot Management
     const fetchHotspots = async (sceneId) => {
         try {
-            const response = await api.get(`/admin/scenes/${sceneId}/hotspots`);
-            setHotspots(response.data);
+            const data = await hotspotsService.getBySceneId(sceneId);
+            setHotspots(data);
         } catch (error) {
             console.error('Error fetching hotspots:', error);
         }
@@ -263,9 +263,9 @@ const AdminScenes = () => {
             };
 
             if (currentHotspot) {
-                await api.put(`/admin/hotspots/${currentHotspot.id}`, hotspotData);
+                await hotspotsService.update(currentHotspot.id, hotspotData);
             } else {
-                await api.post(`/admin/scenes/${currentScene.id}/hotspots`, hotspotData);
+                await hotspotsService.createForScene(currentScene.id, hotspotData);
             }
 
             fetchHotspots(currentScene.id);
@@ -279,7 +279,7 @@ const AdminScenes = () => {
     const handleHotspotDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this hotspot?')) {
             try {
-                await api.delete(`/admin/hotspots/${id}`);
+                await hotspotsService.remove(id);
                 fetchHotspots(currentScene.id);
             } catch (error) {
                 console.error('Error deleting hotspot:', error);

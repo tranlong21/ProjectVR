@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight } from 'lucide-react';
-import api from '../../services/api';
+import * as blogPostsService from '../../services/blogPosts.service';
 import { getThumbnailUrl } from '../../utils/fileUtils';
 
 const BlogsSection = () => {
@@ -10,8 +10,8 @@ const BlogsSection = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const response = await api.get('/blog');
-                const blogList = Array.isArray(response.data) ? response.data : (response.data.content || []);
+                const data = await blogPostsService.getAll();
+                const blogList = Array.isArray(data) ? data : (data.content || []);
                 setBlogs(blogList.slice(0, 3));
             } catch (error) {
                 console.error("Error fetching blogs:", error);

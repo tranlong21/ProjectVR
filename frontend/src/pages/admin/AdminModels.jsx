@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as projectsService from '../../services/projects.service';
+import * as modelsService from '../../services/models3d.service';
 import { Upload, Trash2, Box, ArrowLeft, ExternalLink } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 
@@ -34,8 +35,8 @@ const AdminModels = () => {
 
     const fetchProjects = async () => {
         try {
-            const response = await api.get('/projects');
-            setProjects(response.data);
+            const data = await projectsService.getAll();
+            setProjects(data);
         } catch (error) {
             console.error('Error fetching projects:', error);
         } finally {
@@ -45,8 +46,8 @@ const AdminModels = () => {
 
     const fetchModels = async (projectId) => {
         try {
-            const response = await api.get(`/admin/projects/${projectId}/models`);
-            setModels(response.data);
+            const data = await modelsService.getByProjectId(projectId);
+            setModels(data);
         } catch (error) {
             console.error('Error fetching models:', error);
         }
@@ -89,9 +90,7 @@ const AdminModels = () => {
                 return;
             }
 
-            await api.post(`/admin/projects/${selectedProject.id}/models`, formData, {
-                headers: { "Content-Type": "multipart/form-data" }
-            });
+            await modelsService.uploadModel(selectedProject.id, formData);
 
             // Reset UI
             setIsUploadModalOpen(false);
@@ -114,7 +113,7 @@ const AdminModels = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this model?')) {
             try {
-                await api.delete(`/admin/models/${id}`);
+                await modelsService.remove(id);
                 fetchModels(selectedProject.id);
             } catch (error) {
                 console.error('Error deleting model:', error);

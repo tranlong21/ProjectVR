@@ -1,57 +1,77 @@
+// authStore.js
 import { create } from 'zustand';
-import api from '../services/api';
+import authService from '../services/auth.service';
 
 const useAuthStore = create((set) => ({
-    user: JSON.parse(localStorage.getItem('user')) || null,
-    token: localStorage.getItem('token') || null,
-    isAuthenticated: !!localStorage.getItem('token'),
-    isLoading: false,
-    error: null,
+  user: JSON.parse(localStorage.getItem('user')) || null,
+  token: localStorage.getItem('token') || null,
+  isAuthenticated: !!localStorage.getItem('token'),
+  isLoading: false,
+  error: null,
 
-    login: async (username, password) => {
-        set({ isLoading: true, error: null });
-        try {
-            const response = await api.post('/auth/login', { username, password });
-            const { token, ...user } = response.data;
+  // Dùng khi app khởi động để sync lại từ localStorage
+  hydrateFromLocalStorage: () => {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
 
-            localStorage.setItem('token', token);
-            localStorage.setItem('user', JSON.stringify(user));
+    if (token && userStr) {
+      const user = JSON.parse(userStr);
+      set({
+        token,
+        user,
+        isAuthenticated: true,
+      });
+    }
+  },
 
-            set({
-                user: user,
-                token: token,
-                isAuthenticated: true,
-                isLoading: false
-            });
-            return user;
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || 'Login failed',
-                isLoading: false
-            });
-            throw error;
-        }
-    },
+  login: async (username, password) => {
+    set({ isLoading: true, error: null });
 
-    register: async (username, email, password) => {
-        set({ isLoading: true, error: null });
-        try {
-            await api.post('/auth/register', { username, email, password });
-            set({ isLoading: false });
-        } catch (error) {
-            set({
-                error: error.response?.data?.message || 'Registration failed',
-                isLoading: false
-            });
-            throw error;
-        }
-    },
+    try {
+      const data = await authService.login(username, password);
 
-    logout: () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        set({ user: null, token: null, isAuthenticated: false });
-    },
+      console.log("LOGIN DATA FIXED:", data);
+
+      if (!data?.token) {
+        throw new Error("Token not found in response");
+      }
+
+      const user = {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        roles: data.roles
+      };
+
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      set({
+        user,
+        token: data.token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+
+      return user;
+
+    } catch (error) {
+      console.error("LOGIN ERROR FIX:", error);
+
+      set({
+        error: error.response?.data?.message || error.message,
+        isLoading: false,
+      });
+
+      throw error;
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    set({ user: null, token: null, isAuthenticated: false });
+  },
 }));
 
 export default useAuthStore;

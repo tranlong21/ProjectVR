@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../services/api';
+import * as blogPostsService from '../../services/blogPosts.service';
 import { Plus, Edit, Trash2, Search } from 'lucide-react';
 import Modal from '../../components/admin/Modal';
 import { getThumbnailUrl } from '../../utils/fileUtils';
@@ -31,8 +31,8 @@ const AdminBlog = () => {
 
     const fetchPosts = async () => {
         try {
-            const response = await api.get('/blog');
-            setPosts(response.data);
+            const data = await blogPostsService.getAll();
+            setPosts(data);
         } catch (error) {
             console.error('Error fetching blog posts:', error);
         } finally {
@@ -81,26 +81,18 @@ const AdminBlog = () => {
 
             // 1) Tạo mới hoặc cập nhật bài viết
             if (editingPost) {
-                const res = await api.put(`/admin/blogs/${editingPost.id}`, formData);
-                blogId = res.data.id;
+                const data = await blogPostsService.update(editingPost.id, formData);
+                blogId = data.id;
             } else {
-                const res = await api.post(`/admin/blogs`, formData);
-                blogId = res.data.id;
+                const data = await blogPostsService.create(formData);
+                blogId = data.id;
             }
 
             // 2) Nếu có chọn ảnh thì upload thumbnail
             if (thumbnailFile) {
-                const fd = new FormData();
-                fd.append("file", thumbnailFile);
-
-                const uploadRes = await api.post(
-                    `/admin/blogs/${blogId}/thumbnail`,
-                    fd,
-                    { headers: { "Content-Type": "multipart/form-data" } }
-                );
-
+                const thumbnailUrl = await blogPostsService.uploadThumbnail(blogId, thumbnailFile);
                 // Cập nhật luôn thumbnail URL
-                formData.thumbnailUrl = uploadRes.data;
+                formData.thumbnailUrl = thumbnailUrl;
             }
 
             // 3) Refresh
@@ -120,7 +112,7 @@ const AdminBlog = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this blog post?')) {
             try {
-                await api.delete(`/blog/${id}`);
+                await blogPostsService.remove(id);
                 fetchPosts();
                 alert('Blog post deleted successfully!');
             } catch (error) {
@@ -147,20 +139,6 @@ const AdminBlog = () => {
             setPreviewUrl(tempUrl);
         }
     };
-
-    const uploadThumbnail = async (blogId) => {
-        if (!thumbnailFile) return;
-
-        const fd = new FormData();
-        fd.append("file", thumbnailFile);
-
-        const response = await api.post(`/admin/blogs/${blogId}/thumbnail`, fd, {
-            headers: { "Content-Type": "multipart/form-data" }
-        });
-
-        return response.data; // trả về thumbnail URL
-    };
-
 
     const filteredPosts = posts.filter(p =>
         p.titleVi?.toLowerCase().includes(searchTerm.toLowerCase()) ||

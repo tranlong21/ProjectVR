@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Eye } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import api from '../../services/api';
+import * as categoriesService from '../../services/categories.service';
+import * as projectsService from '../../services/projects.service';
 import { getThumbnailUrl } from '../../utils/fileUtils';
 
 const FeaturedProjectsSection = () => {
@@ -15,13 +16,13 @@ const FeaturedProjectsSection = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [catsRes, projsRes] = await Promise.all([
-                    api.get('/categories'),
-                    api.get('/projects')
+                const [cats, projs] = await Promise.all([
+                    categoriesService.getAll(),
+                    projectsService.getAll()
                 ]);
-                setCategories(catsRes.data);
-                setProjects(projsRes.data);
-                setFilteredProjects(projsRes.data.slice(0, 6));
+                setCategories(cats);
+                setProjects(projs);
+                setFilteredProjects(projs.slice(0, 6));
             } catch (error) {
                 console.error("Error fetching data:", error);
             }
@@ -56,8 +57,8 @@ const FeaturedProjectsSection = () => {
                         <button
                             onClick={() => setActiveCategory('all')}
                             className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === 'all'
-                                    ? 'bg-[var(--accent-purple)] text-white shadow-lg'
-                                    : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'
+                                ? 'bg-[var(--accent-purple)] text-white shadow-lg'
+                                : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'
                                 }`}
                         >
                             {t('common.all')}

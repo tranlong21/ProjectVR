@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import useAuthStore from '../stores/authStore';
+import { isAdmin } from '../utils/authUtils';
 
 const Login = () => {
     const [username, setUsername] = useState('');
@@ -12,13 +13,14 @@ const Login = () => {
         e.preventDefault();
         try {
             const user = await login(username, password);
-            if (user.roles.includes('ROLE_ADMIN')) {
+
+            if (isAdmin(user)) {
                 navigate('/admin/dashboard');
             } else {
                 navigate('/');
             }
         } catch (err) {
-            console.error(err);
+            console.error('Login error:', err);
         }
     };
 
