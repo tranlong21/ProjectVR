@@ -263,7 +263,11 @@ const AdminScenes = () => {
             };
 
             if (currentHotspot) {
-                await hotspotsService.update(currentHotspot.id, hotspotData);
+                await hotspotsService.update(
+                    currentScene.id,       // sceneId (đúng)
+                    currentHotspot.id,     // hotspotId (đúng)
+                    hotspotData            // body dữ liệu
+                );
             } else {
                 await hotspotsService.createForScene(currentScene.id, hotspotData);
             }
@@ -279,7 +283,7 @@ const AdminScenes = () => {
     const handleHotspotDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this hotspot?')) {
             try {
-                await hotspotsService.remove(id);
+                await hotspotsService.remove(currentScene.id, id);
                 fetchHotspots(currentScene.id);
             } catch (error) {
                 console.error('Error deleting hotspot:', error);

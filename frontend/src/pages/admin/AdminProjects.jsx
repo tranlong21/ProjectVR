@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import * as projectsService from '../../services/projects.service';
 import * as categoriesService from '../../services/categories.service';
-import * as adminProjects from "../../services/projects.admin.service";
+import * as projectsService from '../../services/projects.admin.service';
+
 
 import { Plus, Edit, Trash2, Search, Eye, Image as ImageIcon } from 'lucide-react';
 

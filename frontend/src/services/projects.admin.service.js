@@ -1,36 +1,39 @@
-// services/projects.admin.service.js
+// projects.admin.service.js
 import api from "./api";
 
-const ENDPOINT = "/admin/projects";
+const ADMIN_ENDPOINT = "/admin/projects";
 
-export const adminGetAll = async () => {
-    const res = await api.get(ENDPOINT);
+export const getAll = async () => {
+    const res = await api.get(ADMIN_ENDPOINT);
     return res.data;
 };
 
-export const adminGetById = async (id) => {
-    const res = await api.get(`${ENDPOINT}/${id}`);
+export const getById = async (id) => {
+    const res = await api.get(`${ADMIN_ENDPOINT}/${id}`);
     return res.data;
 };
 
-export const adminCreate = async (data) => {
-    const res = await api.post(ENDPOINT, data);
+export const create = async (data) => {
+    const res = await api.post(ADMIN_ENDPOINT, data);
     return res.data;
 };
 
-export const adminUpdate = async (id, data) => {
-    const res = await api.put(`${ENDPOINT}/${id}`, data);
+export const update = async (id, data) => {
+    const res = await api.put(`${ADMIN_ENDPOINT}/${id}`, data);
     return res.data;
 };
 
-export const adminRemove = async (id) => {
-    const res = await api.delete(`${ENDPOINT}/${id}`);
+export const remove = async (id) => {
+    const res = await api.delete(`${ADMIN_ENDPOINT}/${id}`);
     return res.data;
 };
 
-export const adminUploadThumbnail = async (id, formData) => {
-    const res = await api.post(`${ENDPOINT}/${id}/thumbnail`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-    });
+export const uploadThumbnail = async (id, data) => {
+    const isFormData = data instanceof FormData;
+    const res = await api.post(
+        `${ADMIN_ENDPOINT}/${id}/thumbnail`,
+        data,
+        { headers: isFormData ? { "Content-Type": "multipart/form-data" } : {} }
+    );
     return res.data;
 };

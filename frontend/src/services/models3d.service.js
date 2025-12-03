@@ -1,6 +1,7 @@
 import api from './api';
 
 const ENDPOINT = '/models3d';
+const ADMIN_ENDPOINT = '/admin/projects';
 
 export const getAll = async () => {
     const response = await api.get(ENDPOINT);
@@ -27,13 +28,15 @@ export const remove = async (id) => {
     return response.data;
 };
 
+// --- ADMIN AREA ---
+
 export const getByProjectId = async (projectId) => {
-    const response = await api.get(`/projects/${projectId}/models`);
+    const response = await api.get(`${ADMIN_ENDPOINT}/${projectId}/models`);
     return response.data;
 };
 
 export const uploadModel = async (projectId, formData) => {
-    const response = await api.post(`/projects/${projectId}/models`, formData, {
+    const response = await api.post(`${ADMIN_ENDPOINT}/${projectId}/models`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
     });
     return response.data;

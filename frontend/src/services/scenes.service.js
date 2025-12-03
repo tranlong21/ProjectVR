@@ -1,40 +1,41 @@
-import api from './api';
+import api from "./api";
 
-const ENDPOINT = '/scenes';
+const ADMIN_ENDPOINT = "/admin/scenes";
+const PUBLIC_ENDPOINT = "/scenes";
 
-export const getAll = async () => {
-    const response = await api.get(ENDPOINT);
-    return response.data;
+// GET SCENES BY PROJECT
+export const getByProjectId = async (projectId) => {
+  const res = await api.get(`${PUBLIC_ENDPOINT}/project/${projectId}`);
+  return res.data;
 };
 
+// GET ONE SCENE
 export const getById = async (id) => {
-    const response = await api.get(`${ENDPOINT}/${id}`);
-    return response.data;
+  const res = await api.get(`${PUBLIC_ENDPOINT}/${id}`);
+  return res.data;
 };
+
+//  ADMIN
 
 export const create = async (data) => {
-    const response = await api.post(ENDPOINT, data);
-    return response.data;
+  const res = await api.post(ADMIN_ENDPOINT, data);
+  return res.data;
 };
 
+
 export const update = async (id, data) => {
-    const response = await api.put(`${ENDPOINT}/${id}`, data);
-    return response.data;
+  const res = await api.put(`${ADMIN_ENDPOINT}/${id}`, data);
+  return res.data;
 };
 
 export const remove = async (id) => {
-    const response = await api.delete(`${ENDPOINT}/${id}`);
-    return response.data;
-};
-
-export const getByProjectId = async (projectId) => {
-    const response = await api.get(`/scenes/project/${projectId}`);
-    return response.data;
+  const res = await api.delete(`${ADMIN_ENDPOINT}/${id}`);
+  return res.data;
 };
 
 export const uploadPanorama = async (formData) => {
-    const response = await api.post('/files/upload/scenes', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
+  const response = await api.post("/files/upload/scenes", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data;
 };
