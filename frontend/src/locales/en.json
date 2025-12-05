@@ -12,7 +12,8 @@
     "register": "Register",
     "logout": "Logout",
     "dashboard": "Dashboard",
-    "admin": "Admin"
+    "admin": "Admin",
+    "contact": "Contact"
   },
   "hero": {
     "title": "Experience the Future of Reality",

@@ -1,32 +1,13 @@
 import api from './api';
 
-const ENDPOINT = '/models3d';
 const ADMIN_ENDPOINT = '/admin/projects';
+const PUBLIC_PROJECT_ENDPOINT = '/models3d/project';
 
-export const getAll = async () => {
-    const response = await api.get(ENDPOINT);
+export const getByProjectIdPublic = async (projectId) => {
+    const response = await api.get(`${PUBLIC_PROJECT_ENDPOINT}/${projectId}`);
     return response.data;
 };
 
-export const getById = async (id) => {
-    const response = await api.get(`${ENDPOINT}/${id}`);
-    return response.data;
-};
-
-export const create = async (data) => {
-    const response = await api.post(ENDPOINT, data);
-    return response.data;
-};
-
-export const update = async (id, data) => {
-    const response = await api.put(`${ENDPOINT}/${id}`, data);
-    return response.data;
-};
-
-export const remove = async (id) => {
-    const response = await api.delete(`${ENDPOINT}/${id}`);
-    return response.data;
-};
 
 // --- ADMIN AREA ---
 
@@ -39,5 +20,10 @@ export const uploadModel = async (projectId, formData) => {
     const response = await api.post(`${ADMIN_ENDPOINT}/${projectId}/models`, formData, {
         headers: { "Content-Type": "multipart/form-data" }
     });
+    return response.data;
+};
+
+export const deleteModelAdmin = async (id) => {
+    const response = await api.delete(`/admin/models/${id}`);
     return response.data;
 };

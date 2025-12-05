@@ -113,7 +113,7 @@ const AdminModels = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this model?')) {
             try {
-                await modelsService.remove(id);
+                await modelsService.deleteModelAdmin(id);
                 fetchModels(selectedProject.id);
             } catch (error) {
                 console.error('Error deleting model:', error);

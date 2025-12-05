@@ -51,7 +51,7 @@ const ProjectDetail = () => {
                 // Fetch 3D model if project has 3D
                 if (proj.has3d) {
                     try {
-                        const modelsData = await models3dService.getByProjectId(id);
+                        const modelsData = await models3dService.getByProjectIdPublic(id);
                         if (modelsData && modelsData.length > 0) {
                             setModel3d(modelsData[0]); // Get first model
                         }
@@ -220,7 +220,7 @@ const ProjectDetail = () => {
                             <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
 
                                 {/* ⭐ MÔ TẢ 3D */}
-                                {/* <div className="mb-3 text-white">
+                                <div className="mb-3 text-white">
                                     <p className="font-semibold mb-1">
                                         {i18n.language === 'vi' ? "Mô tả mô hình 3D" : "3D Model Description"}
                                     </p>
@@ -228,7 +228,7 @@ const ProjectDetail = () => {
                                     <p className="text-sm text-gray-300 flex-1">
                                         {modelDescription}
                                     </p>
-                                </div> */}
+                                </div>
 
                                 {/* ⭐ VIEWER 3D */}
                                 <div className="w-full h-[460px] rounded-xl overflow-hidden">
