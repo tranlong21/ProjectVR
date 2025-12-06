@@ -26,7 +26,7 @@ public class Model3DController {
      */
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<Model3D>> getModelsByProject(@PathVariable Long projectId) {
-        List<Model3D> models = model3DRepository.findByProjectId(projectId);
+        List<Model3D> models = model3DRepository.findByProjectIdWithHotspots(projectId);
         return ResponseEntity.ok(models);
     }
 

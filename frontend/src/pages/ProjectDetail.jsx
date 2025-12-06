@@ -219,7 +219,6 @@ const ProjectDetail = () => {
                         {activeTab === '3d' && project.has3d && (
                             <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
 
-                                {/* ⭐ MÔ TẢ 3D */}
                                 <div className="mb-3 text-white">
                                     <p className="font-semibold mb-1">
                                         {i18n.language === 'vi' ? "Mô tả mô hình 3D" : "3D Model Description"}
@@ -230,13 +229,15 @@ const ProjectDetail = () => {
                                     </p>
                                 </div>
 
-                                {/* ⭐ VIEWER 3D */}
                                 <div className="w-full h-[460px] rounded-xl overflow-hidden">
                                     {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
                                         <Viewer3D
                                             modelUrl={model3d.modelUrl || model3d.fileUrl}
                                             description={modelDescription}
                                             lang={i18n.language}
+                                            hotspots={project.hotspots || []}
+                                            editMode={false}
+                                            onClickHotspot={(h) => console.log("Clicked hotspot:", h)}
                                         />
                                     ) : (
                                         <div className="flex items-center justify-center h-full text-white">

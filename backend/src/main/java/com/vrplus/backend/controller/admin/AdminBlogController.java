@@ -19,18 +19,12 @@ public class AdminBlogController {
     @Autowired
     BlogRepository blogRepository;
 
-    // ================================
-    //  GET ALL
-    // ================================
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<BlogPost> getAll() {
         return blogRepository.findAll();
     }
 
-    // ================================
-    //  GET BY ID
-    // ================================
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
@@ -39,9 +33,6 @@ public class AdminBlogController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ================================
-    //  CREATE BLOG
-    // ================================
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createBlog(@RequestBody BlogPost blogPost) {
@@ -54,9 +45,6 @@ public class AdminBlogController {
         return ResponseEntity.ok(saved);
     }
 
-    // ================================
-    //  UPDATE BLOG
-    // ================================
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateBlog(
@@ -76,9 +64,6 @@ public class AdminBlogController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ================================
-    //  DELETE BLOG
-    // ================================
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteBlog(@PathVariable Long id) {
@@ -91,9 +76,6 @@ public class AdminBlogController {
     }
 
 
-    // ================================
-    //  UPLOAD THUMBNAIL
-    // ================================
     @PostMapping("/{id}/thumbnail")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> uploadThumbnail(

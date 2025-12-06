@@ -1,18 +1,99 @@
-import React, { Suspense, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import React, { Suspense, useRef, useEffect } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF, Stage } from "@react-three/drei";
+import * as THREE from "three";
 import { getModelUrl } from "../utils/fileUtils";
-import { speakDescription, stopSpeaking } from "../utils/speechUtils";
-import { Volume2, VolumeX } from "lucide-react";
 
-const Model = ({ url }) => {
+
+// ================= MODEL =================
+const Model = ({ url, onLoaded }) => {
     const modelUrl = getModelUrl(url);
     const { scene } = useGLTF(modelUrl);
+
+    useEffect(() => {
+        if (!scene) return;
+        onLoaded && onLoaded(scene);
+    }, [scene]);
+
     return <primitive object={scene} />;
 };
 
-const Viewer3D = ({ modelUrl, description, lang }) => {
-    const [isSpeaking, setIsSpeaking] = useState(false);
+
+// ================= HOTSPOT ICON =================
+const HotspotIcon = ({ x, y, z, onClick }) => (
+    <mesh
+        position={[x, y, z]}
+        onClick={(e) => {
+            e.stopPropagation();
+            onClick();
+        }}
+    >
+        <sphereGeometry args={[0.12, 32, 32]} />
+        <meshStandardMaterial color="yellow" emissive="orange" />
+    </mesh>
+);
+
+
+// ================= HOTSPOT PICKER =================
+// ================= HOTSPOT PICKER =================
+const HotspotPicker = ({ editMode, onAddHotspot, modelRef }) => {
+    const { camera, gl } = useThree();
+    const raycaster = useRef(new THREE.Raycaster());
+    const mouse = useRef(new THREE.Vector2());
+    const controlsRef = useRef();
+
+    useEffect(() => {
+        const canvas = gl.domElement;
+
+        const handleClick = (e) => {
+            if (!editMode) return;
+            if (!modelRef.current) return;
+            if (!controlsRef.current) return;
+
+            const rect = canvas.getBoundingClientRect();
+
+            mouse.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+            raycaster.current.setFromCamera(mouse.current, camera);
+
+            const hits = raycaster.current.intersectObject(modelRef.current, true);
+            if (!hits.length) return;
+
+            const hit = hits[0].point.clone();
+
+            const camPos = camera.position.clone();
+            const target = controlsRef.current.target.clone();
+
+            onAddHotspot(
+                { x: hit.x, y: hit.y, z: hit.z },
+                { x: camPos.x, y: camPos.y, z: camPos.z },
+                { x: target.x, y: target.y, z: target.z }
+            );
+        };
+
+        canvas.addEventListener("pointerdown", handleClick);
+        return () => canvas.removeEventListener("pointerdown", handleClick);
+    }, [editMode, gl, camera, onAddHotspot]);
+
+    // ❌ ĐÃ BỎ autoRotate — KHÔNG XOAY NỮA
+    return <OrbitControls ref={controlsRef} makeDefault />;
+};
+
+
+// ================= MAIN VIEWER =================
+const Viewer3D = ({
+    modelUrl,
+    editMode = false,
+    hotspots = [],
+    onAddHotspot = () => {},
+    onClickHotspot = () => {},
+}) => {
+    const modelRef = useRef(null);
+
+    const onModelLoaded = (scene) => {
+        modelRef.current = scene;
+    };
 
     if (!modelUrl) {
         return (
@@ -22,43 +103,40 @@ const Viewer3D = ({ modelUrl, description, lang }) => {
         );
     }
 
-    const handleSpeak = () => {
-        if (!isSpeaking) {
-            // 🔊 Bắt đầu đọc
-            setIsSpeaking(true);
-            speakDescription(description, lang, () => {
-                setIsSpeaking(false); // 📌 Đọc xong → icon tắt
-            });
-        } else {
-            // ⏹ Dừng đọc
-            stopSpeaking();
-            setIsSpeaking(false);
-        }
-    };
-
     return (
-        <div className="relative w-full h-full bg-gray-900">
-
-            {/* 🔊 NÚT LOA */}
-            <button
-                onClick={handleSpeak}
-                className="absolute top-3 right-3 z-50 text-white bg-black/40 p-2 rounded-full hover:bg-black/60 transition"
+        <div className="w-full h-full bg-gray-900">
+            <Canvas
+                dpr={[1, 2]}
+                camera={{ fov: 50 }}
+                gl={{
+                    antialias: true,
+                    preserveDrawingBuffer: false,
+                    powerPreference: "high-performance",
+                }}
             >
-                {isSpeaking ? (
-                    <Volume2 className="w-6 h-6 animate-pulse text-purple-300" />
-                ) : (
-                    <VolumeX className="w-6 h-6 text-purple-300" />
-                )}
-            </button>
-
-            {/* 🎧 CANVAS 3D */}
-            <Canvas shadows dpr={[1, 2]} camera={{ fov: 50 }}>
                 <Suspense fallback={null}>
                     <Stage environment="city" intensity={0.6}>
-                        <Model url={modelUrl} />
+                        <Model url={modelUrl} onLoaded={onModelLoaded} />
                     </Stage>
+
+                    {/* HOTSPOT CLICK ENGINE */}
+                    <HotspotPicker
+                        editMode={editMode}
+                        onAddHotspot={onAddHotspot}
+                        modelRef={modelRef}
+                    />
+
+                    {/* EXISTING HOTSPOTS */}
+                    {hotspots.map((h) => (
+                        <HotspotIcon
+                            key={h.id}
+                            x={h.x}
+                            y={h.y}
+                            z={h.z}
+                            onClick={() => onClickHotspot(h)}
+                        />
+                    ))}
                 </Suspense>
-                <OrbitControls autoRotate />
             </Canvas>
         </div>
     );
