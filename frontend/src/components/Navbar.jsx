@@ -22,7 +22,7 @@ const Navbar = () => {
         { path: '/solutions', label: t('nav.solutions') || 'Solutions' },
         { path: '/technology', label: t('nav.technology') || 'Technology' },
         { path: '/blog', label: t('nav.blog') || 'Blog' },
-        { path: '/contact', label: t('nav.contact') || 'Contact' },
+        // { path: '/contact', label: t('nav.contact') || 'Contact' },
     ];
 
     const languages = [

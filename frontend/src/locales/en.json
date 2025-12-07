@@ -28,7 +28,8 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "read_more": "Read More",
-    "all": "All"
+    "all": "All",
+    "contact": "Contact Us" 
   },
   "warning": "Warning",
   "model": {

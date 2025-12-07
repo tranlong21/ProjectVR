@@ -41,7 +41,7 @@ const Solutions = () => {
                                     {solution.desc}
                                 </p>
                                 <button className="px-6 py-2 border border-[var(--accent-purple)] text-[var(--accent-purple)] rounded hover:bg-[var(--accent-purple)] hover:text-white transition-colors">
-                                    Learn More
+                                    {t("common.read_more")}
                                 </button>
                             </div>
                         </div>

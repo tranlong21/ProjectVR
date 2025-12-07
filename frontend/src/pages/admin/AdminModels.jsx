@@ -1,5 +1,4 @@
-// src/pages/admin/AdminModels.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import * as projectsService from "../../services/projects.service";
 import * as modelsService from "../../services/models3d.service";
 import { Upload, Trash2, Box, ArrowLeft, ExternalLink } from "lucide-react";
@@ -35,9 +34,6 @@ const AdminModels = () => {
     const [editMode, setEditMode] = useState(false); // bật/tắt chế độ chọn hotspot
     const [pendingHotspot, setPendingHotspot] = useState(null); // vị trí click gần nhất
 
-    // =========================
-    // EFFECT: LOAD PROJECTS
-    // =========================
     useEffect(() => {
         fetchProjects();
     }, []);
@@ -83,9 +79,6 @@ const AdminModels = () => {
         }
     };
 
-    // =========================
-    // HANDLERS: UPLOAD MODEL
-    // =========================
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setUploadFormData((prev) => ({
@@ -160,9 +153,60 @@ const AdminModels = () => {
         }
     };
 
-    // =========================
-    // RENDER: NO PROJECT SELECTED
-    // =========================
+    const currentModel = models[0] || null;
+    
+    useEffect(() => {
+        if (currentModel && currentModel.id) {
+            fetchHotspots(currentModel.id);
+        }
+    }, [currentModel]);
+
+
+    // 👉 Viewer 3D được memo hóa để không tạo lại Canvas mỗi lần setState lặt vặt
+    const viewer3D = useMemo(() => {
+        if (!selectedModel) return null;
+
+        return (
+            <Viewer3D
+                key={selectedModel.id} // đổi model → remount sạch
+                modelUrl={selectedModel.fileUrl || selectedModel.modelUrl}
+                editMode={editMode}
+                hotspots={hotspots}
+                onAddHotspot={(pos, camPos, camTarget) => {
+                    // Chỉ cho phép khi đang bật mode chọn
+                    if (!editMode) return;
+
+                    setPendingHotspot({
+                        modelId: selectedModel.id,
+
+                        x: pos.x,
+                        y: pos.y,
+                        z: pos.z,
+
+                        cameraPosX: camPos.x,
+                        cameraPosY: camPos.y,
+                        cameraPosZ: camPos.z,
+
+                        cameraTargetX: camTarget.x,
+                        cameraTargetY: camTarget.y,
+                        cameraTargetZ: camTarget.z,
+
+                        titleVi: "",
+                        titleEn: "",
+                        orderId: 1,
+                    });
+                }}
+                onClickHotspot={(h) => {
+                    if (window.confirm("Delete this hotspot?")) {
+                        hotspotService
+                            .removeForModel(selectedModel.id, h.id)
+                            .then(() => fetchHotspots(selectedModel.id));
+                    }
+                }}
+            />
+        );
+    }, [selectedModel, editMode, hotspots]);
+
     if (!selectedProject) {
         return (
             <div className="space-y-6">
@@ -202,11 +246,6 @@ const AdminModels = () => {
             </div>
         );
     }
-
-    // =========================
-    // MAIN RENDER
-    // =========================
-    const currentModel = models[0] || null;
 
     return (
         <div className="space-y-6 relative">
@@ -355,7 +394,7 @@ const AdminModels = () => {
 
                             {hotspots.length === 0 ? (
                                 <p className="text-gray-500 dark:text-gray-400 text-sm">
-                                    No hotspots yet. Click "Manage Hotspots" to create one.
+                                    Không có hotspots. Chọn "Thêm Hotspots" để tạo hotspot.
                                 </p>
                             ) : (
                                 <ul className="space-y-3">
@@ -586,7 +625,9 @@ const AdminModels = () => {
 
                         {/* HEADER */}
                         <div className="flex justify-between items-center mb-3">
-                            <h2 className="text-xl font-bold">Hotspot Editor — {selectedModel.name}</h2>
+                            <h2 className="text-xl font-bold">
+                                Hotspot Editor — {selectedModel.name}
+                            </h2>
 
                             <div className="flex gap-2">
                                 <button
@@ -595,7 +636,7 @@ const AdminModels = () => {
                                         setPendingHotspot(null);
                                     }}
                                     className={`px-4 py-1.5 rounded text-sm 
-                            ${editMode ? "bg-yellow-600" : "bg-blue-600"}`}
+                        ${editMode ? "bg-yellow-600" : "bg-blue-600"}`}
                                 >
                                     {editMode ? "Đang Chọn..." : "Chọn Vị trí"}
                                 </button>
@@ -636,41 +677,7 @@ const AdminModels = () => {
 
                             {/* LEFT: 3D Viewer */}
                             <div className="flex-1 min-w-0 h-full border border-gray-700 rounded">
-                                <Viewer3D
-                                    modelUrl={selectedModel.fileUrl || selectedModel.modelUrl}
-                                    editMode={editMode}
-                                    hotspots={hotspots}
-                                    onAddHotspot={(pos, camPos, camTarget) => {
-                                        if (!editMode) return;
-
-                                        setPendingHotspot({
-                                            modelId: selectedModel.id,
-
-                                            x: pos.x,
-                                            y: pos.y,
-                                            z: pos.z,
-
-                                            cameraPosX: camPos.x,
-                                            cameraPosY: camPos.y,
-                                            cameraPosZ: camPos.z,
-
-                                            cameraTargetX: camTarget.x,
-                                            cameraTargetY: camTarget.y,
-                                            cameraTargetZ: camTarget.z,
-
-                                            titleVi: "",
-                                            titleEn: "",
-                                            orderId: 1,
-                                        });
-                                    }}
-                                    onClickHotspot={(h) => {
-                                        if (window.confirm("Delete this hotspot?")) {
-                                            hotspotService
-                                                .removeForModel(selectedModel.id, h.id)
-                                                .then(() => fetchHotspots(selectedModel.id));
-                                        }
-                                    }}
-                                />
+                                {viewer3D}
                             </div>
 
                             {/* RIGHT: FORM PANEL */}
@@ -679,7 +686,7 @@ const AdminModels = () => {
 
                                 {!pendingHotspot ? (
                                     <p className="text-sm text-gray-400">
-                                        Click "Add Hotspot" → Click vào model để chọn vị trí.
+                                        Click "Chọn Vị trí" → Click vào model để chọn vị trí.
                                     </p>
                                 ) : (
                                     <div className="space-y-3">
@@ -691,7 +698,10 @@ const AdminModels = () => {
                                                 type="text"
                                                 value={pendingHotspot.titleVi || ""}
                                                 onChange={e =>
-                                                    setPendingHotspot({ ...pendingHotspot, titleVi: e.target.value })
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        titleVi: e.target.value,
+                                                    })
                                                 }
                                                 className="w-full mt-1 p-2 rounded bg-slate-700"
                                             />
@@ -704,7 +714,10 @@ const AdminModels = () => {
                                                 type="text"
                                                 value={pendingHotspot.titleEn || ""}
                                                 onChange={e =>
-                                                    setPendingHotspot({ ...pendingHotspot, titleEn: e.target.value })
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        titleEn: e.target.value,
+                                                    })
                                                 }
                                                 className="w-full mt-1 p-2 rounded bg-slate-700"
                                             />
@@ -717,7 +730,10 @@ const AdminModels = () => {
                                                 type="number"
                                                 value={pendingHotspot.orderId ?? 1}
                                                 onChange={e =>
-                                                    setPendingHotspot({ ...pendingHotspot, orderId: +e.target.value })
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        orderId: +e.target.value,
+                                                    })
                                                 }
                                                 className="w-full mt-1 p-2 rounded bg-slate-700"
                                             />
@@ -725,55 +741,141 @@ const AdminModels = () => {
 
                                         {/* POSITION */}
                                         <div>
-                                            <label className="text-xs text-gray-400">Position (x, y, z)</label>
+                                            <label className="text-xs text-gray-400">
+                                                Position (x, y, z)
+                                            </label>
 
-                                            <input type="number" step="0.01" value={pendingHotspot.x}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, x: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.x}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        x: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.y}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, y: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.y}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        y: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.z}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, z: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.z}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        z: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
                                         </div>
 
                                         {/* CAMERA POSITION */}
                                         <div>
-                                            <label className="text-xs text-gray-400">Camera Position</label>
+                                            <label className="text-xs text-gray-400">
+                                                Camera Position
+                                            </label>
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraPosX}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraPosX: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraPosX}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraPosX: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraPosY}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraPosY: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraPosY}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraPosY: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraPosZ}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraPosZ: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraPosZ}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraPosZ: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
                                         </div>
 
                                         {/* CAMERA TARGET */}
                                         <div>
-                                            <label className="text-xs text-gray-400">Camera Target</label>
+                                            <label className="text-xs text-gray-400">
+                                                Camera Target
+                                            </label>
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraTargetX}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraTargetX: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraTargetX}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraTargetX: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraTargetY}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraTargetY: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraTargetY}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraTargetY: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
 
-                                            <input type="number" step="0.01" value={pendingHotspot.cameraTargetZ}
-                                                onChange={e => setPendingHotspot({ ...pendingHotspot, cameraTargetZ: +e.target.value })}
-                                                className="w-full mt-1 p-2 rounded bg-slate-700" />
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={pendingHotspot.cameraTargetZ}
+                                                onChange={e =>
+                                                    setPendingHotspot({
+                                                        ...pendingHotspot,
+                                                        cameraTargetZ: +e.target.value,
+                                                    })
+                                                }
+                                                className="w-full mt-1 p-2 rounded bg-slate-700"
+                                            />
                                         </div>
-
                                     </div>
                                 )}
                             </div>

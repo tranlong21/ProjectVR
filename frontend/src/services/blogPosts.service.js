@@ -1,6 +1,7 @@
 import api from './api';
 
 const ENDPOINT = '/blog';
+const ADMIN_ENDPOINT = '/admin/blogs';
 
 export const getAll = async () => {
     const response = await api.get(ENDPOINT);
@@ -29,9 +30,14 @@ export const remove = async (id) => {
 
 export const uploadThumbnail = async (id, file) => {
     const formData = new FormData();
-    formData.append('file', file);
-    const response = await api.post(`${ENDPOINT}/${id}/thumbnail`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-    });
-    return response.data;
+    formData.append("file", file);
+
+    const response = await api.post(
+        `${ADMIN_ENDPOINT}/${id}/thumbnail`,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+    );
+
+    return response.data; // trả về URL đúng từ BE
 };
+

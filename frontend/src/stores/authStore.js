@@ -1,4 +1,3 @@
-// authStore.js
 import { create } from 'zustand';
 import authService from '../services/auth.service';
 
@@ -9,7 +8,6 @@ const useAuthStore = create((set) => ({
   isLoading: false,
   error: null,
 
-  // Dùng khi app khởi động để sync lại từ localStorage
   hydrateFromLocalStorage: () => {
     const token = localStorage.getItem('token');
     const userStr = localStorage.getItem('user');
@@ -24,16 +22,35 @@ const useAuthStore = create((set) => ({
     }
   },
 
+  register: async (username, email, password) => {
+    set({ isLoading: true, error: null });
+
+    try {
+      const data = await authService.register(username, email, password);
+
+      // ❗ Vì API không trả token → không xử lý user/token tại đây
+      set({ isLoading: false });
+
+      return data;   // Trả về data gốc của API (thường là message)
+
+    } catch (error) {
+      set({
+        error: error.response?.data?.message || error.message,
+        isLoading: false,
+      });
+
+      throw error;
+    }
+  },
+
   login: async (username, password) => {
     set({ isLoading: true, error: null });
 
     try {
       const data = await authService.login(username, password);
 
-      console.log("LOGIN DATA FIXED:", data);
-
       if (!data?.token) {
-        throw new Error("Token not found in response");
+        throw new Error("Token not found in login response");
       }
 
       const user = {
@@ -56,8 +73,6 @@ const useAuthStore = create((set) => ({
       return user;
 
     } catch (error) {
-      console.error("LOGIN ERROR FIX:", error);
-
       set({
         error: error.response?.data?.message || error.message,
         isLoading: false,

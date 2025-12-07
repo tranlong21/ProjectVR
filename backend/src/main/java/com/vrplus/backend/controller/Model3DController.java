@@ -21,18 +21,10 @@ public class Model3DController {
         return model3DRepository.findAll();
     }
 
-    /**
-     * Get all 3D models for a specific project
-     */
+    // ⭐ USER GET MODELS + HOTSPOTS
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<Model3D>> getModelsByProject(@PathVariable Long projectId) {
         List<Model3D> models = model3DRepository.findByProjectIdWithHotspots(projectId);
         return ResponseEntity.ok(models);
-    }
-
-    @PostMapping
-    public ResponseEntity<Model3D> createModel(@RequestBody Model3D model) {
-        Model3D _model = model3DRepository.save(model);
-        return ResponseEntity.ok(_model);
     }
 }

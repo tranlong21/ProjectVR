@@ -77,28 +77,34 @@ const AdminBlog = () => {
         setLoading(true);
 
         try {
-            let blogId = null;
+            let savedPost;
 
-            // 1) Tạo mới hoặc cập nhật bài viết
-            if (editingPost) {
-                const data = await blogPostsService.update(editingPost.id, formData);
-                blogId = data.id;
+            if (!editingPost) {
+                savedPost = await blogPostsService.create(formData);
             } else {
-                const data = await blogPostsService.create(formData);
-                blogId = data.id;
+                savedPost = await blogPostsService.update(editingPost.id, formData);
             }
 
-            // 2) Nếu có chọn ảnh thì upload thumbnail
+            let thumbnailUrl = savedPost.thumbnailUrl;
+
             if (thumbnailFile) {
-                const thumbnailUrl = await blogPostsService.uploadThumbnail(blogId, thumbnailFile);
-                // Cập nhật luôn thumbnail URL
-                formData.thumbnailUrl = thumbnailUrl;
+                try {
+                    thumbnailUrl = await blogPostsService.uploadThumbnail(savedPost.id, thumbnailFile);
+                } catch (error) {
+                    console.warn("Thumbnail upload error:", error);
+                }
             }
 
-            // 3) Refresh
-            await fetchPosts();
-            handleCloseModal();
+            savedPost.thumbnailUrl = thumbnailUrl;
 
+            setPosts((prev) => {
+                if (editingPost) {
+                    return prev.map(p => p.id === savedPost.id ? savedPost : p);
+                }
+                return [savedPost, ...prev];
+            });
+
+            handleCloseModal();
             alert(editingPost ? "Blog updated successfully!" : "Blog created successfully!");
 
         } catch (error) {
@@ -108,6 +114,7 @@ const AdminBlog = () => {
             setLoading(false);
         }
     };
+
 
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this blog post?')) {

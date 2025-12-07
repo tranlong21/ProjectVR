@@ -1,10 +1,11 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const SolutionsSection = () => {
     const { t } = useTranslation();
+    const navigate = useNavigate();
 
     const solutions = [
         { title: "VR for Tourism", img: "/assets/images/tourism_360_tour.png", desc: "Transport travelers to destinations before they book with immersive 360 tours." },
@@ -51,6 +52,7 @@ const SolutionsSection = () => {
                                     </div>
                                 </div>
                             </div>
+
                             <div className="w-full lg:w-1/2 space-y-6">
                                 <h3 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] group-hover:text-[var(--accent-purple)] transition-colors">
                                     {solution.title}
@@ -68,8 +70,14 @@ const SolutionsSection = () => {
                                         <span>Reduced travel costs</span>
                                     </li>
                                 </ul>
-                                <button className="pt-4 flex items-center text-[var(--text-primary)] font-bold hover:text-[var(--accent-purple)] transition-colors group/btn">
-                                    Learn More <ArrowRight className="ml-2 group-hover/btn:translate-x-2 transition-transform" size={20} />
+
+                                {/* FIXED BUTTON — navigate instead of router.push */}
+                                <button
+                                    onClick={() => navigate("/solutions")}
+                                    className="pt-4 flex items-center text-[var(--text-primary)] font-bold hover:text-[var(--accent-purple)] transition-colors group/btn"
+                                >
+                                    {t("common.read_more")}
+                                    <ArrowRight className="ml-2 group-hover/btn:translate-x-2 transition-transform" size={20} />
                                 </button>
                             </div>
                         </div>

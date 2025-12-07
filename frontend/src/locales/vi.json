@@ -29,7 +29,8 @@
         "loading": "Đang tải...",
         "error": "Đã xảy ra lỗi",
         "read_more": "Xem thêm",
-        "all": "Tất cả"
+        "all": "Tất cả", 
+        "contact":"Liên Hệ Ngay"
     },
     "warning": "Cảnh báo",
     "model": {

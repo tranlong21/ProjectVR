@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -41,10 +42,18 @@ public class AdminHotspotController {
         return ResponseEntity.ok(savedHotspot);
     }
 
-    @PutMapping("/hotspots/{id}")
-    public ResponseEntity<?> updateHotspot(@PathVariable Long id, @RequestBody Hotspot hotspotDetails) {
+    @PutMapping("/scenes/{sceneId}/hotspots/{id}")
+    public ResponseEntity<?> updateSceneHotspot(
+            @PathVariable Long sceneId,
+            @PathVariable Long id,
+            @RequestBody Hotspot hotspotDetails
+    ) {
         Hotspot hotspot = hotspotRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Hotspot not found"));
+
+        // Không được đổi sceneId
+        hotspot.setScene(sceneRepository.findById(sceneId)
+                .orElseThrow(() -> new RuntimeException("Scene not found")));
 
         hotspot.setType(hotspotDetails.getType());
         hotspot.setYaw(hotspotDetails.getYaw());
@@ -60,11 +69,19 @@ public class AdminHotspotController {
         return ResponseEntity.ok(updatedHotspot);
     }
 
-    @DeleteMapping("/hotspots/{id}")
-    public ResponseEntity<?> deleteHotspot(@PathVariable Long id) {
+
+    @DeleteMapping("/scenes/{sceneId}/hotspots/{id}")
+    public ResponseEntity<?> deleteSceneHotspot(
+            @PathVariable Long sceneId,
+            @PathVariable Long id
+    ) {
+        hotspotRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Hotspot not found"));
+
         hotspotRepository.deleteById(id);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(Map.of("message", "Hotspot deleted successfully"));
     }
+
 
     // 3D MODELS
 

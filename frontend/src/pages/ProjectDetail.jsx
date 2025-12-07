@@ -219,7 +219,7 @@ const ProjectDetail = () => {
                         {activeTab === '3d' && project.has3d && (
                             <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
 
-                                <div className="mb-3 text-white">
+                                {/* <div className="mb-3 text-white">
                                     <p className="font-semibold mb-1">
                                         {i18n.language === 'vi' ? "Mô tả mô hình 3D" : "3D Model Description"}
                                     </p>
@@ -227,7 +227,7 @@ const ProjectDetail = () => {
                                     <p className="text-sm text-gray-300 flex-1">
                                         {modelDescription}
                                     </p>
-                                </div>
+                                </div> */}
 
                                 <div className="w-full h-[460px] rounded-xl overflow-hidden">
                                     {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
@@ -235,7 +235,7 @@ const ProjectDetail = () => {
                                             modelUrl={model3d.modelUrl || model3d.fileUrl}
                                             description={modelDescription}
                                             lang={i18n.language}
-                                            hotspots={project.hotspots || []}
+                                            hotspots={model3d?.hotspots || []}
                                             editMode={false}
                                             onClickHotspot={(h) => console.log("Clicked hotspot:", h)}
                                         />
@@ -284,7 +284,7 @@ const ProjectDetail = () => {
                         </ul>
                         <button className="w-full mt-6 bg-[var(--accent-blue)] hover:bg-[var(--accent-blue)]/90 
                                             text-[var(--primary)] font-bold py-3 rounded-lg transition-colors shadow-lg shadow-blue-500/30">
-                            Contact Us
+                            {t("common.contact")}
                         </button>
                     </div>
                 </div>
