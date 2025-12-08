@@ -22,14 +22,15 @@
   },
   "home": {
     "featured": "Featured Projects",
-    "view_all": "View All Projects"
+    "view_all": "View All Projects",
+    "view_details": "View Details"
   },
   "common": {
     "loading": "Loading...",
     "error": "An error occurred",
     "read_more": "Read More",
     "all": "All",
-    "contact": "Contact Us" 
+    "contact": "Contact Us"
   },
   "warning": "Warning",
   "model": {
@@ -53,6 +54,65 @@
     "blog": {
       "title": "Blog & News",
       "subtitle": "Latest updates on VR/AR technology and our platform"
+    }
+  },
+  "categories": {
+    "real_estate": {
+      "title": "Immersive Real Estate 3D",
+      "subtitle": "Explore properties as if you were truly there",
+      "content": "VRPlus enables developers to showcase properties with outstanding realism. From interactive 3D architectural models to panoramic VR tours, everything runs directly in the browser with no installation required. Smart hotspots reveal room details, materials, dimensions, and AI-powered interior suggestions."
+    },
+    "tourism": {
+      "title": "360° Virtual Tourism",
+      "subtitle": "Experience destinations with breathtaking panoramic immersion",
+      "content": "VRPlus recreates tourist attractions using advanced 360° panorama technology similar to AirPano. Users explore landscapes through immersive viewpoints enhanced by hotspots, descriptions, geographic data, and audio guides. A powerful solution for tourism brands and regional digital transformation projects."
+    },
+    "culture": {
+      "title": "Digital Cultural Spaces",
+      "subtitle": "Preserve and showcase culture through 3D and VR technology",
+      "content": "VRPlus digitizes cultural heritage using high-resolution 3D models, photogrammetry, and virtual museums. Visitors can inspect artifacts from every angle, enjoy narrated experiences, and interact through informative hotspots. A major step toward cultural digitalization."
+    },
+    "education": {
+      "title": "VR Education Solutions",
+      "subtitle": "Interactive learning powered by 3D models and virtual classrooms",
+      "content": "VRPlus delivers immersive learning environments with 3D STEM models, virtual labs, and VR classrooms. WebXR allows students to interact directly with simulations, significantly improving retention. Teachers can create multimedia lessons and track learner progress."
+    },
+    "historical_sites": {
+      "title": "Reconstructed Heritage Sites",
+      "subtitle": "Explore historical landmarks through immersive 3D reconstructions",
+      "content": "VRPlus restores ancient structures and degraded heritage sites using advanced 3D simulation. Users understand historical context, architectural changes, and time progression through hotspots that reveal archaeological data and related events."
+    },
+    "technology": {
+      "title": "VRPlus Technology",
+      "subtitle": "WebXR, 3D and AI combined into one powerful ecosystem",
+      "content": "VRPlus leverages WebXR, Three.js, AI-based optimization, and intelligent hotspot management to deliver smooth VR/3D experiences directly in the browser. It supports large 3D models, real-time streaming, physics simulation, and enterprise scalability."
+    }
+  },
+  "technology": {
+    "title": "Core Technologies of VRPlus",
+    "subtitle": "Next-generation WebXR • 3D • Panorama Platform",
+    "description": "VRPlus integrates WebXR, real-time 3D, 360° panoramas and intelligent hotspots to deliver fully interactive virtual experiences directly in the browser.",
+    "sections": {
+      "r3f_engine_title": "React Three Fiber Engine",
+      "r3f_engine_desc": "Built on Three.js with React Three Fiber, VRPlus enables building 3D scenes with JSX, offering high performance and scalable architecture.",
+      "drei_title": "Drei Enhanced Components",
+      "drei_desc": "Utilizing Drei helpers such as OrbitControls, Html hotspots, Environment and AdaptiveDpr to accelerate 3D development and improve visual quality.",
+      "panorama_title": "360° Panorama (Pannellum)",
+      "panorama_desc": "High-resolution multi-scene panorama tours with interactive hotspots, scene transitions, info panels and 3D model linking.",
+      "hotspot_system_title": "Smart Hotspot System",
+      "hotspot_system_desc": "Supports 2D & 3D hotspots: scene switching, camera navigation, annotations, model linking and interactive content inside the virtual environment.",
+      "camera_control_title": "Camera Tracking & Navigation",
+      "camera_control_desc": "Admin tools allow capturing camera position, orientation and creating smooth camera animation paths for guided 3D storytelling.",
+      "cloud_streaming_title": "Cloud Streaming for GLB/GLTF",
+      "cloud_streaming_desc": "Load and render high-poly GLB/GLTF models directly from the server using optimized Three.js + R3F pipelines.",
+      "ai_integration_title": "AI Scene Intelligence",
+      "ai_integration_desc": "AI analyzes 3D scenes and panoramas to auto-generate descriptions, suggest hotspot positions and assist with guided narration.",
+      "spatial_audio_title": "Spatial Audio & Voice Guide",
+      "spatial_audio_desc": "Immersive 3D audio and voice narration bring environments to life and enhance presence in VR.",
+      "multi_device_title": "Cross-Platform Compatibility",
+      "multi_device_desc": "Fully compatible with PC, mobile and VR headsets through WebXR—no installation required.",
+      "realtime_sync_title": "Real-time Sync",
+      "realtime_sync_desc": "An architecture ready for multi-user scenarios: shared viewing, interactions and synchronized camera states."
     }
   }
 }

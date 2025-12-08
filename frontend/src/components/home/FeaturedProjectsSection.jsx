@@ -44,30 +44,48 @@ const FeaturedProjectsSection = () => {
         <section className="py-24 bg-[var(--bg-primary)] relative transition-colors duration-300">
             <div className="max-w-7xl mx-auto px-6">
                 <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-                    <div>
+                    <div className="w-full text-left">
                         <h2 className="text-4xl md:text-5xl font-bold mb-4 text-[var(--text-primary)]">
                             {t('nav.projects') || "Featured Projects"}
                         </h2>
-                        <div className="h-1 w-24 bg-[var(--accent-purple)] rounded mb-4"></div>
-                        <p className="text-[var(--text-secondary)] text-lg">Explore our latest immersive experiences.</p>
-                    </div>
 
+                        <div className="h-1 w-24 bg-[var(--accent-purple)] rounded mb-4"></div>
+
+                        <p className="text-[var(--text-secondary)] text-lg">
+                            Explore our latest immersive experiences.
+                        </p>
+                    </div>
                     {/* Filter Tabs */}
-                    <div className="flex flex-wrap gap-2">
+                    <div
+                        className="
+                            flex 
+                            gap-x-3 gap-y-3 
+                            md:flex-wrap
+                            flex-nowrap overflow-x-auto  
+                            no-scrollbar               
+                            justify-start 
+                            md:justify-end
+                            w-full md:w-auto           
+                        "
+                    >
                         <button
                             onClick={() => setActiveCategory('all')}
-                            className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === 'all'
+                            className={`inline-flex shrink-0 items-center px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === 'all'
                                 ? 'bg-[var(--accent-purple)] text-white shadow-lg'
                                 : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'
                                 }`}
                         >
                             {t('common.all')}
                         </button>
+
                         {categories.map(cat => (
                             <button
                                 key={cat.id}
                                 onClick={() => setActiveCategory(cat.id)}
-                                className={`px-6 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === cat.id ? 'bg-[var(--accent-purple)] text-white shadow-lg' : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'}`}
+                                className={`inline-flex shrink-0 items-center px-4 py-2 rounded-full text-sm font-bold transition-all duration-300 ${activeCategory === cat.id
+                                    ? 'bg-[var(--accent-purple)] text-white shadow-lg'
+                                    : 'bg-gray-200 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-white/10'
+                                    }`}
                             >
                                 {i18n.language === 'vi' ? cat.nameVi : cat.nameEn}
                             </button>

@@ -1,51 +1,109 @@
-import React from 'react';
-import { useTranslation } from 'react-i18next';
-import PageBanner from '../components/PageBanner';
+import React, { useEffect } from "react";
+import { useTranslation } from "react-i18next";
+import PageBanner from "../components/PageBanner";
 
 const Solutions = () => {
     const { t } = useTranslation();
 
-    const solutions = [
-        { title: "VR for Tourism", img: "/assets/images/tourism_360_tour.png", desc: "Transport travelers to destinations before they book." },
-        { title: "VR for Real Estate", img: "/assets/images/virtual_showroom_project.png", desc: "Showcase properties to buyers anywhere in the world." },
-        { title: "VR for Education", img: "/assets/images/vr_education_training.png", desc: "Immersive learning experiences for better retention." },
-        { title: "VR for Museum", img: "/assets/images/vr_hero_banner.png", desc: "Preserve heritage and make museums accessible to all." },
-        { title: "VR for Industry", img: "/assets/images/team_collaboration.png", desc: "Safety training and remote operations visualization." },
+    const panels = [
+        { key: "real_estate", img: "/assets/images/virtual_showroom_project.png" },
+        { key: "tourism", img: "/assets/images/tourism_360_tour.png" },
+        { key: "culture", img: "/assets/images/vr_hero_banner.png" },
+        { key: "education", img: "/assets/images/vr_education_training.png" },
+        { key: "historical_sites", img: "/assets/images/team_collaboration.png" },
+        { key: "technology", img: "/assets/images/ar_marketing_demo.png" },
     ];
+
+    // Horizontal scroll effect
+    useEffect(() => {
+        const wrapper = document.getElementById("solutions-wrapper");
+        const track = document.getElementById("solutions-track");
+
+        const handleScroll = () => {
+            const rect = wrapper.getBoundingClientRect();
+            const start = rect.top;
+            const total = wrapper.offsetHeight - window.innerHeight;
+
+            if (start > 0 || Math.abs(start) >= total) return;
+
+            const progress = Math.abs(start) / total;
+            const moveX = progress * -((panels.length - 1) * window.innerWidth);
+
+            track.style.transform = `translateX(${moveX}px)`;
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     return (
         <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+
+            {/* BANNER */}
             <PageBanner
-                title={t('banners.solutions.title')}
-                subtitle={t('banners.solutions.subtitle')}
+                title={t("banners.solutions.title")}
+                subtitle={t("banners.solutions.subtitle")}
                 backgroundImage="/assets/images/tourism_360_tour.png"
             />
-            <div className="max-w-7xl mx-auto py-12 px-4">
-                <div className="space-y-20">
-                    {solutions.map((solution, index) => (
-                        <div key={index} className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} items-center gap-12`}>
-                            <div className="w-full md:w-1/2">
-                                <div className="relative rounded-2xl overflow-hidden neon-border group">
-                                    <img
-                                        src={solution.img}
-                                        alt={solution.title}
-                                        className="w-full h-auto transition-transform duration-700 group-hover:scale-105"
-                                        onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent opacity-60"></div>
+
+            {/* HORIZONTAL SCROLL SECTION */}
+            <div id="solutions-wrapper" className="relative h-[650vh] w-full">
+
+                <div className="sticky top-0 h-screen overflow-hidden bg-[var(--bg-primary)]">
+
+                    <div
+                        id="solutions-track"
+                        className="flex h-full transition-transform duration-300 ease-out will-change-transform"
+                        style={{ width: `${panels.length * 100}vw` }}
+                    >
+
+                        {panels.map((p, index) => (
+                            <div
+                                key={index}
+                                className="w-screen h-screen flex items-center justify-center px-6 md:px-12"
+                                style={{ background: "var(--bg-primary)" }}
+                            >
+                                <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+
+                                    {/* IMAGE */}
+                                    <div className="relative w-full aspect-[4/3] overflow-hidden rounded-2xl shadow-lg neon-border group">
+                                        <img
+                                            src={p.img}
+                                            alt={t(`categories.${p.key}.title`)}
+                                            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
+                                            onError={(e) => (e.target.src = "/assets/images/vr_hero_banner.png")}
+                                        />
+                                    </div>
+
+                                    {/* TEXT CONTENT */}
+                                    <div className="space-y-6 text-center md:text-left">
+
+                                        {/* TITLE */}
+                                        <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-[#C084FC] to-[#8B5CF6] bg-clip-text text-transparent">
+                                            {t(`categories.${p.key}.title`)}
+                                        </h1>
+
+                                        {/* SUBTITLE */}
+                                        <p
+                                            className="text-lg md:text-xl leading-relaxed font-semibold"
+                                            style={{ color: "var(--text-primary)" }}
+                                        >
+                                            {t(`categories.${p.key}.subtitle`)}
+                                        </p>
+
+                                        {/* CONTENT */}
+                                        <p
+                                            className="text-base md:text-lg leading-relaxed"
+                                            style={{ color: "var(--text-secondary)" }}
+                                        >
+                                            {t(`categories.${p.key}.content`)}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="w-full md:w-1/2 space-y-6">
-                                <h2 className="text-3xl font-bold text-[var(--accent-blue)]">{solution.title}</h2>
-                                <p className="text-lg text-gray-300 leading-relaxed">
-                                    {solution.desc}
-                                </p>
-                                <button className="px-6 py-2 border border-[var(--accent-purple)] text-[var(--accent-purple)] rounded hover:bg-[var(--accent-purple)] hover:text-white transition-colors">
-                                    {t("common.read_more")}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        ))}
+
+                    </div>
                 </div>
             </div>
         </div>

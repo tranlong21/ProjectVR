@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import Hero from '../components/Hero';
+import Hero from '../components/home/Hero';
 import ServicesSection from '../components/home/ServicesSection';
 import SolutionsSection from '../components/home/SolutionsSection';
 import FeaturedProjectsSection from '../components/home/FeaturedProjectsSection';

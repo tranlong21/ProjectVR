@@ -23,14 +23,15 @@
     },
     "home": {
         "featured": "Dự Án Nổi Bật",
-        "view_all": "Xem Tất Cả Dự Án"
+        "view_all": "Xem Tất Cả Dự Án",
+        "view_details": "Xem Chi Tiết"
     },
     "common": {
         "loading": "Đang tải...",
         "error": "Đã xảy ra lỗi",
         "read_more": "Xem thêm",
-        "all": "Tất cả", 
-        "contact":"Liên Hệ Ngay"
+        "all": "Tất cả",
+        "contact": "Liên Hệ Ngay"
     },
     "warning": "Cảnh báo",
     "model": {
@@ -54,6 +55,65 @@
         "blog": {
             "title": "Blog & Tin Tức",
             "subtitle": "Cập nhật mới nhất về công nghệ VR/AR và nền tảng của chúng tôi"
+        }
+    },
+    "categories": {
+        "real_estate": {
+            "title": "Bất Động Sản 3D Toàn Diện",
+            "subtitle": "Khám phá dự án như đang đứng tại chỗ với VR và mô hình kiến trúc 3D",
+            "content": "VRPlus giúp doanh nghiệp bất động sản tạo ra trải nghiệm tham quan trực quan nhất. Từ mô hình nhà mẫu 3D, không gian nội thất đến tour VR 360 toàn cảnh – tất cả hiển thị trực tiếp trên trình duyệt mà không cần cài đặt. Hotspot thông minh cung cấp thông tin phòng, vật liệu, diện tích và gợi ý thiết kế nội thất bằng AI."
+        },
+        "tourism": {
+            "title": "Du Lịch Thực Tế Ảo 360°",
+            "subtitle": "Trải nghiệm điểm đến với góc nhìn toàn cảnh sống động",
+            "content": "VRPlus tái tạo địa danh bằng công nghệ panorama 360° giống AirPano, mang đến trải nghiệm chân thực như đang đứng giữa khung cảnh. Hotspot cung cấp mô tả, thông tin địa lý, audio guide và các viewpoint đặc sắc. Giải pháp mạnh mẽ cho doanh nghiệp du lịch và chuyển đổi số của tỉnh, thành phố."
+        },
+        "culture": {
+            "title": "Không Gian Văn Hóa Số",
+            "subtitle": "Bảo tồn và trình chiếu văn hóa qua mô hình 3D và VR",
+            "content": "VRPlus giúp số hóa di sản văn hóa bằng mô hình 3D chất lượng cao, photogrammetry và bảo tàng ảo. Người xem có thể quan sát hiện vật từ mọi góc độ, trải nghiệm thuyết minh sinh động và tương tác qua hotspot thông tin. Đây là bước tiến quan trọng trong bảo tồn văn hóa số."
+        },
+        "education": {
+            "title": "Giải Pháp Giáo Dục VR",
+            "subtitle": "Học tập tương tác qua mô hình 3D và lớp học thực tế ảo",
+            "content": "VRPlus mang đến môi trường học tập trực quan bằng mô hình 3D STEM, thí nghiệm ảo và lớp học VR. Công nghệ WebXR giúp học sinh tương tác trực tiếp với mô phỏng, tăng hiệu quả ghi nhớ. Giáo viên có thể tạo bài học đa phương tiện và theo dõi tiến trình học tập."
+        },
+        "historical_sites": {
+            "title": "Tái Hiện Di Tích Lịch Sử",
+            "subtitle": "Khám phá di sản qua mô hình 3D và VR phục dựng",
+            "content": "VRPlus phục dựng kiến trúc cổ và các di tích đã xuống cấp thông qua mô phỏng 3D, giúp người xem hiểu rõ lịch sử, giai đoạn xây dựng và sự biến đổi theo thời gian. Hotspot cung cấp dữ liệu khảo cổ, sự kiện và tư liệu liên quan."
+        },
+        "technology": {
+            "title": "Công Nghệ VRPlus",
+            "subtitle": "WebXR, 3D và AI trong một nền tảng duy nhất",
+            "content": "VRPlus ứng dụng WebXR, Three.js, AI tối ưu mô hình và hệ thống hotspot thông minh để tạo ra trải nghiệm VR/3D mượt mà trên trình duyệt. Hỗ trợ mô hình lớn, streaming real-time, mô phỏng vật lý và khả năng mở rộng cho doanh nghiệp."
+        }
+    },
+    "technology": {
+        "title": "Công Nghệ Cốt Lõi Của VRPlus",
+        "subtitle": "Nền tảng WebXR – 3D – Panorama thế hệ mới",
+        "description": "VRPlus kết hợp WebXR, 3D thời gian thực, ảnh panorama 360° và hotspot thông minh để tạo ra trải nghiệm tương tác mượt mà ngay trên trình duyệt.",
+        "sections": {
+            "r3f_engine_title": "React Three Fiber Engine",
+            "r3f_engine_desc": "Hệ thống 3D được xây dựng bằng Three.js kết hợp React Three Fiber, cho phép dựng scene bằng JSX, tối ưu hiệu suất render và dễ dàng mở rộng.",
+            "drei_title": "Drei Components",
+            "drei_desc": "Sử dụng bộ thư viện Drei để tăng tốc phát triển: OrbitControls, Html hotspot, Environment, AdaptiveDpr… giúp mô hình 3D hiển thị mượt và trực quan hơn.",
+            "panorama_title": "Panorama 360° (Pannellum)",
+            "panorama_desc": "Hiển thị tour ảnh 360° đa cảnh, hỗ trợ hotspot chuyển cảnh, mô tả văn bản, audio guide và khả năng mở 3D từ panorama.",
+            "hotspot_system_title": "Hệ Thống Hotspot Thông Minh",
+            "hotspot_system_desc": "Hotspot 2D & 3D hỗ trợ: mở mô tả, chuyển cảnh, dẫn hướng camera, mở mô hình 3D, hiển thị thông tin và xử lý tương tác trong không gian ảo.",
+            "camera_control_title": "Camera Tracking & Navigation",
+            "camera_control_desc": "Admin có thể lấy vị trí camera, hướng nhìn và tạo animation camera để tái tạo chuyển động mượt mà trong mô hình 3D.",
+            "cloud_streaming_title": "Cloud Streaming GLB/GLTF",
+            "cloud_streaming_desc": "Hỗ trợ tải mô hình 3D dung lượng lớn (GLB/GLTF) trực tiếp từ server, tối ưu loading nhờ Three.js + R3F.",
+            "ai_integration_title": "AI Mô Tả Cảnh",
+            "ai_integration_desc": "AI phân tích mô hình hoặc cảnh panorama để tạo mô tả tự động, gợi ý hotspot và hỗ trợ thuyết minh cho người dùng.",
+            "spatial_audio_title": "Spatial Audio & Voice Guide",
+            "spatial_audio_desc": "Âm thanh 3D và giọng đọc mô tả giúp tăng độ chân thực và mang lại cảm giác hiện diện trong không gian ảo.",
+            "multi_device_title": "Tương Thích Mọi Thiết Bị",
+            "multi_device_desc": "Hoạt động trên PC, mobile và VR headset thông qua WebXR, không cần cài đặt ứng dụng riêng.",
+            "realtime_sync_title": "Realtime Sync",
+            "realtime_sync_desc": "Kiến trúc sẵn sàng cho nhiều người truy cập cùng lúc, chia sẻ góc nhìn và tương tác thời gian thực trong không gian VR."
         }
     }
 }

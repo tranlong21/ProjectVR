@@ -144,7 +144,7 @@ const ProjectList = () => {
                                             {project.location || "Virtual Space"}
                                         </span>
                                         <span className="px-4 py-2 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-xs uppercase tracking-wider group-hover:bg-[var(--primary)] group-hover:text-[var(--primary-foreground)] transition-all duration-300">
-                                            {t('home.view_details') || "View Details"}
+                                            {t('home.view_details')}
                                         </span>
                                     </div>
                                 </div>
