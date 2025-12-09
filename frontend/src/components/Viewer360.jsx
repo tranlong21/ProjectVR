@@ -8,6 +8,9 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
     const viewerContainer = useRef(null);
     const viewerInstance = useRef(null);
 
+    const isDragging = useRef(false);
+    const mouseDownPos = useRef(null);
+
     const [currentSceneId, setCurrentSceneId] = useState(
         initialSceneId || (scenes.length ? scenes[0].id : null)
     );
@@ -80,7 +83,6 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
         }));
     };
 
-
     const loadScene = (scene) => {
         if (!viewerContainer.current) return;
 
@@ -105,12 +107,41 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
         });
 
         viewerInstance.current.on("load", () => {
-            if (onClick) {
-                viewerInstance.current.on("mousedown", (event) => {
-                    const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
-                    onClick(pitch, yaw);
-                });
+            setupMouseEvents();
+        });
+    };
+
+    const setupMouseEvents = () => {
+        if (!viewerInstance.current) return;
+
+        viewerInstance.current.on("mousedown", (event) => {
+            isDragging.current = false;
+            mouseDownPos.current = { x: event.clientX, y: event.clientY };
+        });
+
+        viewerInstance.current.on("mousemove", (event) => {
+            if (!mouseDownPos.current) return;
+
+            const dx = Math.abs(event.clientX - mouseDownPos.current.x);
+            const dy = Math.abs(event.clientY - mouseDownPos.current.y);
+
+            if (dx > 5 || dy > 5) {
+                isDragging.current = true;
             }
+        });
+
+        viewerInstance.current.on("mouseup", (event) => {
+            if (isDragging.current) {
+                mouseDownPos.current = null;
+                return; 
+            }
+
+            if (onClick) {
+                const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
+                onClick(pitch, yaw);
+            }
+
+            mouseDownPos.current = null;
         });
     };
 
@@ -133,7 +164,6 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
             hotSpots: []
         });
 
-        // Add hotspots
         const hotspots = buildHotspots(scene);
         hotspots.forEach((h) => {
             try {
@@ -141,14 +171,8 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
             } catch { }
         });
 
-        // Click to pick yaw/pitch
         viewerInstance.current.on("load", () => {
-            if (onClick) {
-                viewerInstance.current.on("mousedown", (event) => {
-                    const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
-                    onClick(pitch, yaw);
-                });
-            }
+            setupMouseEvents();
         });
 
         return () => viewerInstance.current?.destroy();
@@ -163,6 +187,7 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
 
         loadScene(scene);
     }, [currentSceneId, scenes, i18n.language]);
+
 
     const renderSceneSelector = () => {
         if (scenes.length <= 1) return null;
