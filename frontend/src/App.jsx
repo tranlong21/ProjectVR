@@ -1,7 +1,9 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import useAuthStore from './stores/authStore';
+import { isAdmin } from './utils/authUtils';
 
+// Layouts
 import UserLayout from './layouts/UserLayout';
 import AdminLayout from './layouts/AdminLayout';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,32 +33,27 @@ import AdminGallery from './pages/admin/AdminGallery';
 
 const App = () => {
 
-    // 🔥 Không destructure setState từ hook!
-    // 🔥 Phải dùng setState từ chính store object
-    const authStore = useAuthStore;
-
-    useEffect(() => {
-        const token = localStorage.getItem("token");
-        const user = localStorage.getItem("user");
-
-        if (token && user) {
-            authStore.setState({
-                token,
-                user: JSON.parse(user),
-                isAuthenticated: true,
-            });
-        }
-    }, []);
+    const { user } = useAuthStore();  
 
     return (
         <Routes>
-            {/* Auth Routes */}
+
+            {/* AUTH */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
             {/* USER ROUTES */}
             <Route element={<UserLayout />}>
-                <Route path="/" element={<Home />} />
+
+                <Route
+                    path="/"
+                    element={
+                        user && isAdmin(user)
+                            ? <Navigate to="/admin/dashboard" replace />
+                            : <Home />
+                    }
+                />
+
                 <Route path="/projects" element={<ProjectList />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/services" element={<Services />} />
@@ -70,7 +67,11 @@ const App = () => {
 
             {/* ADMIN ROUTES */}
             <Route element={<ProtectedRoute role="ROLE_ADMIN" />}>
-                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+
+                <Route
+                    path="/admin"
+                    element={<Navigate to="/admin/dashboard" replace />}
+                />
 
                 <Route element={<AdminLayout />}>
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
@@ -82,6 +83,7 @@ const App = () => {
                     <Route path="/admin/gallery" element={<AdminGallery />} />
                 </Route>
             </Route>
+
         </Routes>
     );
 };
