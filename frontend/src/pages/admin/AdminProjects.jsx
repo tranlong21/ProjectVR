@@ -27,6 +27,8 @@ const AdminProjects = () => {
     });
     const [thumbnailFile, setThumbnailFile] = useState(null);
     const [activeTab, setActiveTab] = useState('general');
+    const API_URL = import.meta.env.VITE_API_URL;
+
 
     useEffect(() => {
         fetchProjects();
@@ -205,7 +207,7 @@ const AdminProjects = () => {
                                     <td className="px-6 py-4 whitespace-nowrap">
                                         {project.thumbnailUrl ? (
                                             <img
-                                                src={project.thumbnailUrl.startsWith('http') ? project.thumbnailUrl : `http://localhost:8096${project.thumbnailUrl}`}
+                                                src={project.thumbnailUrl.startsWith('http') ? project.thumbnailUrl : `${API_URL}${project.thumbnailUrl}`}
                                                 alt={project.title}
                                                 className="h-12 w-12 rounded object-cover"
                                             />

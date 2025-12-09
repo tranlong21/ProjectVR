@@ -10,6 +10,7 @@ const SidebarAdmin = ({ collapsed, theme }) => {
         { path: '/admin/models', icon: <Box size={20} />, label: 'Models' },
         { path: '/admin/scenes', icon: <Image size={20} />, label: 'Scenes' },
         { path: '/admin/users', icon: <Users size={20} />, label: 'Users' },
+        { path: '/admin/gallery', icon: <Users size={20} />, label: 'Gallery' },
     ];
 
     return (

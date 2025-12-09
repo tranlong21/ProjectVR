@@ -27,6 +27,7 @@ import AdminBlog from './pages/admin/AdminBlog';
 import AdminScenes from './pages/admin/AdminScenes';
 import AdminModels from './pages/admin/AdminModels';
 import AdminUsers from './pages/admin/AdminUsers';
+import AdminGallery from './pages/admin/AdminGallery';
 
 const App = () => {
 
@@ -78,6 +79,7 @@ const App = () => {
                     <Route path="/admin/scenes" element={<AdminScenes />} />
                     <Route path="/admin/models" element={<AdminModels />} />
                     <Route path="/admin/users" element={<AdminUsers />} />
+                    <Route path="/admin/gallery" element={<AdminGallery />} />
                 </Route>
             </Route>
         </Routes>

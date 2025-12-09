@@ -19,6 +19,8 @@ const ProjectDetail = () => {
     const [model3d, setModel3d] = useState(null);
     const [activeTab, setActiveTab] = useState('info');
     const [loading, setLoading] = useState(true);
+    const [currentSceneId, setCurrentSceneId] = useState(null);
+
 
     const modelDescription =
         i18n.language === "vi"
@@ -32,39 +34,36 @@ const ProjectDetail = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Fetch project details
                 const proj = await projectsService.getById(id);
                 setProject(proj);
 
-                // Set initial active tab based on content availability
-                if (proj.has360) setActiveTab('360');
-                else if (proj.has3d) setActiveTab('3d');
-                else if (proj.hasGallery) setActiveTab('gallery');
-                else setActiveTab('info');
+                if (proj.has360) setActiveTab("360");
+                else if (proj.has3d) setActiveTab("3d");
+                else if (proj.hasGallery) setActiveTab("gallery");
+                else setActiveTab("info");
 
-                // Fetch scenes if project has 360
                 if (proj.has360) {
                     const scenesData = await scenesService.getByProjectId(id);
                     setScenes(scenesData);
+
+                    if (scenesData.length > 0) {
+                        setCurrentSceneId(scenesData[0].id);
+                    }
                 }
 
-                // Fetch 3D model if project has 3D
                 if (proj.has3d) {
-                    try {
-                        const modelsData = await models3dService.getByProjectIdPublic(id);
-                        if (modelsData && modelsData.length > 0) {
-                            setModel3d(modelsData[0]); // Get first model
-                        }
-                    } catch (error) {
-                        console.error('Error fetching 3D model:', error);
+                    const modelsData = await models3dService.getByProjectIdPublic(id);
+                    if (modelsData && modelsData.length > 0) {
+                        setModel3d(modelsData[0]);
                     }
                 }
             } catch (error) {
-                console.error('Error fetching project data:', error);
+                console.error("Error fetching project data:", error);
             } finally {
                 setLoading(false);
             }
         };
+
         fetchData();
     }, [id]);
 
@@ -201,8 +200,9 @@ const ProjectDetail = () => {
                                 {scenes.length > 0 ? (
                                     <Viewer360
                                         scenes={scenes}
-                                        initialSceneId={scenes[0]?.id}
+                                        initialSceneId={currentSceneId}
                                         i18n={i18n}
+                                        onSceneChange={(newId) => setCurrentSceneId(newId)}
                                     />
                                 ) : (
                                     <div className="flex items-center justify-center h-full text-[var(--text-secondary)] bg-gray-900">

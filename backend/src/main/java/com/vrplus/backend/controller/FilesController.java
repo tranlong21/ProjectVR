@@ -140,4 +140,18 @@ public class FilesController {
         int lastDot = filename.lastIndexOf('.');
         return lastDot > 0 ? filename.substring(lastDot + 1) : "";
     }
+    @PostMapping("/upload/gallery")
+    public ResponseEntity<?> uploadGalleryImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String filename = storageService.save(file);
+            Map<String, String> response = new HashMap<>();
+            response.put("fileUrl", "/api/files/" + filename);
+            response.put("filename", filename);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError()
+                    .body("Failed to upload file: " + e.getMessage());
+        }
+    }
 }
+

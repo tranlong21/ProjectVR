@@ -3,121 +3,194 @@ import 'pannellum/build/pannellum.css';
 import 'pannellum';
 import { getPanoramaUrl } from '../utils/fileUtils';
 
-const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'en' } }) => {
+const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi' }, onClick, onSceneChange }) => {
+
     const viewerContainer = useRef(null);
     const viewerInstance = useRef(null);
-    const [currentSceneId, setCurrentSceneId] = useState(initialSceneId || (scenes.length > 0 ? scenes[0].id : null));
+
+    const [currentSceneId, setCurrentSceneId] = useState(
+        initialSceneId || (scenes.length ? scenes[0].id : null)
+    );
+
+    const getIconFile = (hotspot) => {
+        if (hotspot.type === "link_scene") return `/assets/icons/${hotspot.icon || "arrow_right"}.png`;
+        if (hotspot.type === "info") return "/assets/icons/info.png";
+        if (hotspot.type === "url") return "/assets/icons/link.png";
+        return null;
+    };
+
+    const getURLTitle = (hotspot) => {
+        return i18n.language === "vi"
+            ? hotspot.titleVi || hotspot.descriptionVi || "Liên kết ngoài"
+            : hotspot.titleEn || hotspot.descriptionEn || "External link";
+    };
+
+    const buildHotspots = (scene) => {
+        return (scene.hotspots || []).map((hotspot) => ({
+            pitch: hotspot.pitch,
+            yaw: hotspot.yaw,
+            type: hotspot.type === "info" ? "info" : "custom",
+
+            text:
+                hotspot.type === "info"
+                    ? (i18n.language === 'vi'
+                        ? hotspot.titleVi || hotspot.descriptionVi
+                        : hotspot.titleEn || hotspot.descriptionEn)
+                    : undefined,
+
+            createTooltipFunc:
+                hotspot.type !== "info"
+                    ? (div) => {
+                        div.classList.add("custom-hotspot");
+
+                        const iconPath = getIconFile(hotspot);
+
+                        div.innerHTML = `
+                            <img src="${iconPath}" class="hotspot-icon" />
+                            <div class="hotspot-tooltip"></div>
+                        `;
+
+                        const tooltip = div.querySelector(".hotspot-tooltip");
+
+                        if (hotspot.type === "link_scene") {
+                            const target = scenes.find(s => s.id === hotspot.targetSceneId);
+                            tooltip.innerText = target?.name || "Go to scene";
+                        }
+
+                        if (hotspot.type === "url") {
+                            tooltip.innerText = getURLTitle(hotspot);
+                        }
+                    }
+                    : null,
+
+            clickHandlerFunc: () => {
+                if (hotspot.type === "link_scene") {
+                    setCurrentSceneId(hotspot.targetSceneId);
+                    if (onSceneChange) onSceneChange(hotspot.targetSceneId);
+                }
+
+                if (hotspot.type === "url") {
+                    const url =
+                        i18n.language === "vi"
+                            ? hotspot.descriptionVi
+                            : hotspot.descriptionEn;
+                    if (url) window.open(url, "_blank");
+                }
+            }
+        }));
+    };
+
+
+    const loadScene = (scene) => {
+        if (!viewerContainer.current) return;
+
+        const panoramaUrl = getPanoramaUrl(scene.panoramaUrl);
+
+        try { viewerInstance.current?.destroy(); } catch { }
+
+        viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
+            type: "equirectangular",
+            panorama: panoramaUrl,
+            autoLoad: true,
+            showControls: true,
+            pitch: scene.initialPitch || 0,
+            yaw: scene.initialYaw || 0,
+            hfov: 110,
+            hotSpots: []
+        });
+
+        const hotspots = buildHotspots(scene);
+        hotspots.forEach(h => {
+            try { viewerInstance.current.addHotSpot(h); } catch { }
+        });
+
+        viewerInstance.current.on("load", () => {
+            if (onClick) {
+                viewerInstance.current.on("mousedown", (event) => {
+                    const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
+                    onClick(pitch, yaw);
+                });
+            }
+        });
+    };
 
     useEffect(() => {
-        if (viewerContainer.current && scenes.length > 0 && currentSceneId) {
-            const scene = scenes.find(s => s.id === currentSceneId);
-            if (!scene) return;
+        if (!viewerContainer.current || !scenes.length || !currentSceneId) return;
 
-            console.log("Initializing Pannellum with scene:", scene);
+        const scene = scenes.find((s) => s.id === currentSceneId);
+        if (!scene) return;
 
-            // Destroy previous instance if it exists
-            if (viewerInstance.current) {
-                try {
-                    viewerInstance.current.destroy();
-                } catch (e) {
-                    console.warn("Error destroying previous viewer instance:", e);
-                }
-            }
+        const panoUrl = getPanoramaUrl(scene.panoramaUrl);
 
+        viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
+            type: "equirectangular",
+            panorama: panoUrl,
+            autoLoad: true,
+            showControls: true,
+            pitch: scene.initialPitch || 0,
+            yaw: scene.initialYaw || 0,
+            hfov: 110,
+            hotSpots: []
+        });
+
+        // Add hotspots
+        const hotspots = buildHotspots(scene);
+        hotspots.forEach((h) => {
             try {
-                // Get the full panorama URL
-                const panoramaUrl = getPanoramaUrl(scene.panoramaUrl);
-                console.log("Loading panorama from:", panoramaUrl);
+                viewerInstance.current.addHotSpot(h);
+            } catch { }
+        });
 
-                // Convert hotspots to Pannellum format
-                const pannellumHotspots = (scene.hotspots || []).map((hotspot) => {
-                    const baseHotspot = {
-                        pitch: hotspot.pitch || 0,
-                        yaw: hotspot.yaw || 0,
-                        type: hotspot.type === 'link_scene' ? 'scene' : 'info',
-                        text: i18n.language === 'vi' ? (hotspot.titleVi || hotspot.titleEn) : (hotspot.titleEn || hotspot.titleVi),
-                    };
-
-                    if (hotspot.type === 'link_scene' && hotspot.targetSceneId) {
-                        return {
-                            ...baseHotspot,
-                            sceneId: hotspot.targetSceneId,
-                            clickHandlerFunc: () => {
-                                console.log("Switching to scene:", hotspot.targetSceneId);
-                                setCurrentSceneId(hotspot.targetSceneId);
-                            }
-                        };
-                    } else if (hotspot.type === 'info') {
-                        const description = i18n.language === 'vi' ? (hotspot.descriptionVi || hotspot.descriptionEn) : (hotspot.descriptionEn || hotspot.descriptionVi);
-                        return {
-                            ...baseHotspot,
-                            text: description || baseHotspot.text
-                        };
-                    } else if (hotspot.type === 'url') {
-                        const url = i18n.language === 'vi' ? (hotspot.descriptionVi || hotspot.descriptionEn) : (hotspot.descriptionEn || hotspot.descriptionVi);
-                        return {
-                            ...baseHotspot,
-                            URL: url,
-                            type: 'info'
-                        };
-                    }
-
-                    return baseHotspot;
+        // Click to pick yaw/pitch
+        viewerInstance.current.on("load", () => {
+            if (onClick) {
+                viewerInstance.current.on("mousedown", (event) => {
+                    const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
+                    onClick(pitch, yaw);
                 });
-
-                // Initialize Pannellum with proper panorama URL
-                viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
-                    type: 'equirectangular',
-                    panorama: panoramaUrl,
-                    pitch: scene.initialPitch || 0,
-                    yaw: scene.initialYaw || 0,
-                    hfov: 110,
-                    autoLoad: true,
-                    showControls: true,
-                    hotSpots: pannellumHotspots,
-                    crossOrigin: 'anonymous', // Enable CORS for images
-                    onError: (err) => {
-                        console.error("Pannellum Error:", err);
-                        console.error("Failed to load panorama:", panoramaUrl);
-                    }
-                });
-            } catch (error) {
-                console.error("Failed to initialize Pannellum:", error);
             }
-        }
+        });
 
-        return () => {
-            if (viewerInstance.current) {
-                try {
-                    viewerInstance.current.destroy();
-                    viewerInstance.current = null;
-                } catch (e) {
-                    // Ignore destroy errors on unmount
-                }
-            }
-        };
-    }, [scenes, currentSceneId, i18n.language]);
+        return () => viewerInstance.current?.destroy();
+    }, []);
 
-    // Scene navigation thumbnails
+    useEffect(() => {
+        if (!viewerInstance.current) return;
+        if (!scenes.length) return;
+
+        const scene = scenes.find(s => s.id === currentSceneId);
+        if (!scene) return;
+
+        loadScene(scene);
+    }, [currentSceneId, scenes, i18n.language]);
+
     const renderSceneSelector = () => {
         if (scenes.length <= 1) return null;
 
         return (
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/70 p-2 rounded-full backdrop-blur-sm z-10 overflow-x-auto max-w-[90%]">
-                {scenes.map((scene) => (
+            <div className="
+                absolute bottom-4 left-1/2 transform -translate-x-1/2 
+                flex space-x-2 bg-black/70 p-2 rounded-full 
+                backdrop-blur-sm z-10 max-w-[90%] overflow-x-auto no-scrollbar
+            ">
+                {scenes.map(scene => (
                     <button
                         key={scene.id}
-                        onClick={() => setCurrentSceneId(scene.id)}
-                        className={`min-w-[60px] h-16 rounded-lg border-2 overflow-hidden transition-all hover:scale-110 flex-shrink-0 ${currentSceneId === scene.id ? 'border-blue-500 ring-2 ring-blue-400' : 'border-white/50'}`}
-                        title={i18n.language === 'vi' ? scene.titleVi : scene.titleEn}
+                        onClick={() => {
+                            setCurrentSceneId(scene.id);
+                            if (onSceneChange) onSceneChange(scene.id);
+                        }}
+                        className={`
+                            min-w-[60px] h-16 rounded-lg border-2 overflow-hidden transition-all 
+                            hover:scale-110
+                            ${currentSceneId === scene.id ? "border-blue-500" : "border-white/50"}
+                        `}
                     >
                         <img
                             src={getPanoramaUrl(scene.panoramaUrl)}
-                            alt={scene.name}
                             className="w-full h-full object-cover"
-                            onError={(e) => {
-                                e.target.src = '/assets/images/vr_hero_banner.png';
-                            }}
+                            alt={scene.name}
+                            onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
                         />
                     </button>
                 ))}

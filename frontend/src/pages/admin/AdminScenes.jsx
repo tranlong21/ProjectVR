@@ -2,7 +2,24 @@ import React, { useState, useEffect } from 'react';
 import * as projectsService from '../../services/projects.service';
 import * as scenesService from '../../services/scenes.service';
 import * as hotspotsService from '../../services/hotspots.service';
-import { Plus, Edit, Trash2, MapPin, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import Viewer360 from "../../components/Viewer360";
+import {
+    Plus,
+    Edit,
+    Trash2,
+    MapPin,
+    Image as ImageIcon,
+    ArrowLeft,
+    ArrowUp,
+    ArrowDown,
+    ArrowRight,
+    Info,
+    CircleHelp,
+    ExternalLink,
+    Globe
+} from "lucide-react";
+
+
 
 const AdminScenes = () => {
     const [projects, setProjects] = useState([]);
@@ -14,6 +31,10 @@ const AdminScenes = () => {
     const [currentScene, setCurrentScene] = useState(null);
     const [currentHotspot, setCurrentHotspot] = useState(null);
     const [hotspots, setHotspots] = useState([]);
+    const API_URL = import.meta.env.VITE_API_URL;
+    const [isPickerOpen, setIsPickerOpen] = useState(false);
+
+
 
     // Scene Form Data - ALL fields have default values to prevent controlled/uncontrolled switching
     const [sceneFormData, setSceneFormData] = useState({
@@ -38,7 +59,8 @@ const AdminScenes = () => {
         titleEn: '',
         descriptionVi: '',
         descriptionEn: '',
-        icon: 'arrow'
+        icon: '',
+
     });
 
     useEffect(() => {
@@ -79,14 +101,14 @@ const AdminScenes = () => {
         const { name, value } = e.target;
         setSceneFormData(prev => ({
             ...prev,
-            [name]: value ?? ''  // Ensure never undefined
+            [name]: value ?? ''
         }));
     };
 
     const openSceneModal = (scene = null) => {
         if (scene) {
             setCurrentScene(scene);
-            // Use nullish coalescing to ensure all values are defined
+
             setSceneFormData({
                 name: scene.name ?? '',
                 titleVi: scene.titleVi ?? '',
@@ -98,7 +120,6 @@ const AdminScenes = () => {
             });
         } else {
             setCurrentScene(null);
-            // Calculate next order index
             const nextOrderIndex = scenes.length > 0
                 ? Math.max(...scenes.map(s => s.orderIndex ?? 0)) + 1
                 : 0;
@@ -120,13 +141,11 @@ const AdminScenes = () => {
     const handleSceneSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate project selection
         if (!selectedProject || !selectedProject.id) {
             alert('Please select a project first');
             return;
         }
 
-        // Validate required fields
         if (!sceneFormData.name || !sceneFormData.name.trim()) {
             alert('Scene name is required');
             return;
@@ -135,7 +154,6 @@ const AdminScenes = () => {
         try {
             let panoramaUrl = sceneFormData.panoramaUrl;
 
-            // Upload panorama file if provided
             if (uploadType === 'file' && panoramaFile) {
                 const formData = new FormData();
                 formData.append('file', panoramaFile);
@@ -143,13 +161,11 @@ const AdminScenes = () => {
                 panoramaUrl = uploadResponse.fileUrl || uploadResponse;
             }
 
-            // Validate panorama URL
             if (!panoramaUrl || !panoramaUrl.trim()) {
                 alert('Panorama URL or file is required');
                 return;
             }
 
-            // Construct payload with projectId as direct field
             const sceneData = {
                 name: sceneFormData.name,
                 titleVi: sceneFormData.titleVi || '',
@@ -158,7 +174,7 @@ const AdminScenes = () => {
                 orderIndex: parseInt(sceneFormData.orderIndex) || 0,
                 initialYaw: parseFloat(sceneFormData.initialYaw) || 0,
                 initialPitch: parseFloat(sceneFormData.initialPitch) || 0,
-                projectId: selectedProject.id  // Send as direct field
+                projectId: selectedProject.id
             };
 
             console.log('Submitting scene data:', sceneData);
@@ -193,7 +209,6 @@ const AdminScenes = () => {
         }
     };
 
-    // Hotspot Management
     const fetchHotspots = async (sceneId) => {
         try {
             const data = await hotspotsService.getBySceneId(sceneId);
@@ -213,67 +228,114 @@ const AdminScenes = () => {
         const { name, value } = e.target;
         setHotspotFormData(prev => ({
             ...prev,
-            [name]: value ?? ''  // Ensure never undefined
+            [name]: value ?? ''
         }));
     };
 
     const openHotspotForm = (hotspot = null) => {
         if (hotspot) {
             setCurrentHotspot(hotspot);
+
             setHotspotFormData({
-                type: hotspot.type ?? 'link_scene',
+                type: hotspot.type ?? "link_scene",
                 yaw: hotspot.yaw ?? 0,
                 pitch: hotspot.pitch ?? 0,
-                targetSceneId: hotspot.targetSceneId ?? '',
-                titleVi: hotspot.titleVi ?? '',
-                titleEn: hotspot.titleEn ?? '',
-                descriptionVi: hotspot.descriptionVi ?? '',
-                descriptionEn: hotspot.descriptionEn ?? '',
-                icon: hotspot.icon ?? 'arrow'
+                targetSceneId: hotspot.targetSceneId ?? "",
+                titleVi: hotspot.titleVi ?? "",
+                titleEn: hotspot.titleEn ?? "",
+                descriptionVi: hotspot.descriptionVi ?? "",
+                descriptionEn: hotspot.descriptionEn ?? "",
+
+                icon:
+                    hotspot.icon ??
+                    (hotspot.type === "info"
+                        ? "info"
+                        : hotspot.type === "url"
+                            ? "link"
+                            : "")
             });
         } else {
             setCurrentHotspot(null);
             setHotspotFormData({
-                type: 'link_scene',
+                type: "link_scene",
                 yaw: 0,
                 pitch: 0,
-                targetSceneId: '',
-                titleVi: '',
-                titleEn: '',
-                descriptionVi: '',
-                descriptionEn: '',
-                icon: 'arrow'
+                targetSceneId: "",
+                titleVi: "",
+                titleEn: "",
+                descriptionVi: "",
+                descriptionEn: "",
+
+                icon: ""
             });
         }
     };
 
+    const handleTypeChange = (type) => {
+        setHotspotFormData(prev => ({
+            ...prev,
+            type,
+            icon:
+                type === "info"
+                    ? "info"
+                    : type === "url"
+                        ? "link"
+                        : prev.icon
+        }));
+    };
+
     const handleHotspotSubmit = async (e) => {
         e.preventDefault();
+
         try {
             const hotspotData = {
                 type: hotspotFormData.type,
                 yaw: parseFloat(hotspotFormData.yaw) || 0,
                 pitch: parseFloat(hotspotFormData.pitch) || 0,
-                targetSceneId: hotspotFormData.targetSceneId ? parseInt(hotspotFormData.targetSceneId) : null,
+                targetSceneId: hotspotFormData.targetSceneId
+                    ? parseInt(hotspotFormData.targetSceneId)
+                    : null,
                 titleVi: hotspotFormData.titleVi || '',
                 titleEn: hotspotFormData.titleEn || '',
                 descriptionVi: hotspotFormData.descriptionVi || '',
                 descriptionEn: hotspotFormData.descriptionEn || '',
-                icon: hotspotFormData.icon || 'arrow'
+                icon: hotspotFormData.icon || ''
             };
 
+            let savedHotspot;
+
             if (currentHotspot) {
-                await hotspotsService.update(
-                    currentScene.id,       // sceneId (đúng)
-                    currentHotspot.id,     // hotspotId (đúng)
-                    hotspotData            // body dữ liệu
+                savedHotspot = await hotspotsService.update(
+                    currentScene.id,
+                    currentHotspot.id,
+                    hotspotData
                 );
+
+                setHotspots(prev =>
+                    prev.map(h =>
+                        h.id === currentHotspot.id ? { ...h, ...hotspotData } : h
+                    )
+                );
+
             } else {
-                await hotspotsService.createForScene(currentScene.id, hotspotData);
+                savedHotspot = await hotspotsService.createForScene(
+                    currentScene.id,
+                    hotspotData
+                );
+
+                setHotspots(prev => [...prev, savedHotspot]);
             }
 
-            fetchHotspots(currentScene.id);
+            setCurrentScene(prev => ({
+                ...prev,
+                hotspots: [
+                    ...hotspots.filter(h => h.id !== savedHotspot.id),
+                    savedHotspot
+                ]
+            }));
+
             openHotspotForm(null);
+
         } catch (error) {
             console.error('Error saving hotspot:', error);
             alert('Failed to save hotspot');
@@ -346,8 +408,11 @@ const AdminScenes = () => {
                         <div className="relative h-48 bg-gray-200 dark:bg-slate-700">
                             {scene.panoramaUrl ? (
                                 <img
-                                    src={scene.panoramaUrl.startsWith('http') ? scene.panoramaUrl : `http://localhost:8096${scene.panoramaUrl}`}
-                                    alt={scene.name}
+                                    src={
+                                        scene.panoramaUrl.startsWith("http")
+                                            ? scene.panoramaUrl
+                                            : `${API_URL}${scene.panoramaUrl}`
+                                    }
                                     className="w-full h-full object-cover"
                                     onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
                                 />
@@ -559,8 +624,8 @@ const AdminScenes = () => {
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
                                         <select
                                             name="type"
-                                            value={hotspotFormData.type ?? 'link_scene'}
-                                            onChange={handleHotspotInputChange}
+                                            value={hotspotFormData.type}
+                                            onChange={(e) => handleTypeChange(e.target.value)}
                                             className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
                                         >
                                             <option value="link_scene">Link to Scene</option>
@@ -569,38 +634,113 @@ const AdminScenes = () => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Icon</label>
-                                        <input
-                                            type="text"
-                                            name="icon"
-                                            value={hotspotFormData.icon ?? ''}
-                                            onChange={handleHotspotInputChange}
-                                            className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
-                                        />
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                            Icon
+                                        </label>
+                                        {hotspotFormData.type === "link_scene" && (
+                                            <div className="flex gap-2">
+                                                {[
+                                                    { key: "arrow_left" },
+                                                    { key: "arrow_right" },
+                                                    { key: "arrow_up" },
+                                                    { key: "arrow_down" },
+                                                ].map((icon) => (
+                                                    <button
+                                                        key={icon.key}
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setHotspotFormData((prev) => ({ ...prev, icon: icon.key }))
+                                                        }
+                                                        className={`
+                                                                w-10 h-10 flex items-center justify-center border rounded transition
+                                                                ${hotspotFormData.icon === icon.key
+                                                                ? "border-blue-500 bg-blue-500/20"
+                                                                : "border-gray-500 bg-slate-700"
+                                                            }
+            `}
+                                                    >
+                                                        <img
+                                                            src={`/assets/icons/${icon.key}.png`}
+                                                            className="w-5 h-5"
+                                                        />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {hotspotFormData.type === "info" && (
+                                            <div className="flex gap-2">
+                                                <div
+                                                    className={`
+                                                        w-10 h-10 flex items-center justify-center border rounded
+                                                        border-blue-500 bg-blue-50 dark:bg-blue-900
+                                                    `}
+                                                >
+                                                    <img src="/assets/icons/info.png" className="w-5 h-5 opacity-90" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        {hotspotFormData.type === "url" && (
+                                            <div className="flex gap-2">
+                                                <div
+                                                    className={`
+                                                        w-10 h-10 flex items-center justify-center border rounded
+                                                        border-blue-500 bg-blue-50 dark:bg-blue-900
+                                                    `}
+                                                >
+                                                    <img src="/assets/icons/link.png" className="w-5 h-5 opacity-90" />
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
+                                <div className="flex items-end gap-3">
+                                    <div className="flex-1">
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Yaw</label>
                                         <input
                                             type="number"
                                             name="yaw"
-                                            value={hotspotFormData.yaw ?? 0}
+                                            value={hotspotFormData.yaw}
                                             onChange={handleHotspotInputChange}
                                             className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
                                         />
                                     </div>
-                                    <div>
+
+                                    <div className="flex-1">
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Pitch</label>
                                         <input
                                             type="number"
                                             name="pitch"
-                                            value={hotspotFormData.pitch ?? 0}
+                                            value={hotspotFormData.pitch}
                                             onChange={handleHotspotInputChange}
                                             className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
                                         />
                                     </div>
+
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPickerOpen(true)}
+                                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                                    >
+                                        Chọn trên 360°
+                                    </button>
                                 </div>
+                                {hotspotFormData.type === "url" && (
+                                    <input
+                                        type="text"
+                                        name="descriptionVi"
+                                        value={hotspotFormData.descriptionVi ?? ""}
+                                        onChange={(e) =>
+                                            setHotspotFormData(prev => ({
+                                                ...prev,
+                                                descriptionVi: e.target.value,
+                                                descriptionEn: e.target.value
+                                            }))
+                                        }
+                                        placeholder="https://example.com"
+                                        className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
+                                        required
+                                    />
+                                )}
                                 {hotspotFormData.type === 'link_scene' && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Target Scene</label>
@@ -618,7 +758,8 @@ const AdminScenes = () => {
                                         </select>
                                     </div>
                                 )}
-                                {(hotspotFormData.type === 'info' || hotspotFormData.type === 'url') && (
+
+                                {(hotspotFormData.type === 'info') && (
                                     <>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
@@ -642,28 +783,34 @@ const AdminScenes = () => {
                                                 />
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (VI)</label>
-                                                <textarea
-                                                    name="descriptionVi"
-                                                    value={hotspotFormData.descriptionVi ?? ''}
-                                                    onChange={handleHotspotInputChange}
-                                                    rows="2"
-                                                    className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
-                                                />
+                                        {hotspotFormData.type === "info" && (
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        Description (VI)
+                                                    </label>
+                                                    <textarea
+                                                        name="descriptionVi"
+                                                        value={hotspotFormData.descriptionVi ?? ''}
+                                                        onChange={handleHotspotInputChange}
+                                                        rows="2"
+                                                        className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                                        Description (EN)
+                                                    </label>
+                                                    <textarea
+                                                        name="descriptionEn"
+                                                        value={hotspotFormData.descriptionEn ?? ''}
+                                                        onChange={handleHotspotInputChange}
+                                                        rows="2"
+                                                        className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
+                                                    />
+                                                </div>
                                             </div>
-                                            <div>
-                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description (EN)</label>
-                                                <textarea
-                                                    name="descriptionEn"
-                                                    value={hotspotFormData.descriptionEn ?? ''}
-                                                    onChange={handleHotspotInputChange}
-                                                    rows="2"
-                                                    className="w-full p-2 border rounded dark:bg-slate-600 dark:border-slate-500 dark:text-white"
-                                                />
-                                            </div>
-                                        </div>
+                                        )}
                                     </>
                                 )}
                                 <div className="flex justify-end gap-2">
@@ -705,7 +852,12 @@ const AdminScenes = () => {
                                                     {hotspot.type === 'url' && (hotspot.titleVi || hotspot.titleEn || 'Link')}
                                                 </div>
                                                 <div className="text-sm text-gray-500 dark:text-gray-400">
-                                                    {hotspot.type} | Yaw: {hotspot.yaw}, Pitch: {hotspot.pitch}
+                                                    {hotspot.type} | Yaw: {hotspot.yaw}, Pitch: {hotspot.pitch} | Icon: {hotspot.icon && (
+                                                        <img
+                                                            src={`/assets/icons/${hotspot.icon}.png`}
+                                                            className="w-5 h-5 inline-block opacity-80"
+                                                        />
+                                                    )}
                                                 </div>
                                             </div>
                                             <button
@@ -721,6 +873,32 @@ const AdminScenes = () => {
                                     )}
                                 </div>
                             </div>
+                            {isPickerOpen && (
+                                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+                                    <div className="bg-white dark:bg-slate-800 w-full max-w-5xl h-[80vh] rounded-lg relative overflow-hidden">
+
+                                        <button
+                                            className="absolute top-3 right-3 text-white bg-red-600 px-3 py-1 rounded-lg"
+                                            onClick={() => setIsPickerOpen(false)}
+                                        >
+                                            Đóng
+                                        </button>
+
+                                        <Viewer360
+                                            scenes={[currentScene]}
+                                            initialSceneId={currentScene.id}
+                                            onClick={(pitch, yaw) => {
+                                                setHotspotFormData(prev => ({
+                                                    ...prev,
+                                                    pitch: parseFloat(pitch.toFixed(2)),
+                                                    yaw: parseFloat(yaw.toFixed(2)),
+                                                }));
+                                                setIsPickerOpen(false);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
