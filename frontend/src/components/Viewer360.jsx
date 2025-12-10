@@ -10,6 +10,10 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
 
     const isDragging = useRef(false);
     const mouseDownPos = useRef(null);
+    const lastDragTime = useRef(0);
+    const isMouseDown = useRef(false);
+    const mouseHandlers = useRef(null);
+    const mouseEventsAttached = useRef(false);
 
     const [currentSceneId, setCurrentSceneId] = useState(
         initialSceneId || (scenes.length ? scenes[0].id : null)
@@ -112,38 +116,61 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
     };
 
     const setupMouseEvents = () => {
-        if (!viewerInstance.current) return;
+        const viewer = viewerInstance.current;
+        const container = viewerContainer.current;
+        if (!viewer || !container) return;
 
-        viewerInstance.current.on("mousedown", (event) => {
+        // Không gắn thêm lần 2
+        if (mouseEventsAttached.current && mouseHandlers.current) return;
+
+        const handleMouseDown = (event) => {
+            isMouseDown.current = true;
             isDragging.current = false;
             mouseDownPos.current = { x: event.clientX, y: event.clientY };
-        });
+        };
 
-        viewerInstance.current.on("mousemove", (event) => {
-            if (!mouseDownPos.current) return;
+        const handleMouseMove = (event) => {
+            if (!isMouseDown.current || !mouseDownPos.current) return;
 
             const dx = Math.abs(event.clientX - mouseDownPos.current.x);
             const dy = Math.abs(event.clientY - mouseDownPos.current.y);
 
+            // Vượt quá 5px coi như drag
             if (dx > 5 || dy > 5) {
                 isDragging.current = true;
             }
-        });
+        };
 
-        viewerInstance.current.on("mouseup", (event) => {
-            if (isDragging.current) {
-                mouseDownPos.current = null;
-                return; 
-            }
+        const handleMouseUp = (event) => {
+            if (!isMouseDown.current) return;
 
-            if (onClick) {
+            const wasDragging = isDragging.current;
+
+            isMouseDown.current = false;
+            isDragging.current = false;
+            mouseDownPos.current = null;
+
+            // Nếu vừa drag thì KHÔNG xử lý click
+            if (wasDragging || event.button !== 0) return;
+
+            // Đây mới là click thật → convert sang pitch / yaw
+            if (onClick && viewerInstance.current) {
                 const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
                 onClick(pitch, yaw);
             }
+        };
 
-            mouseDownPos.current = null;
-        });
+        // Bắt mousedown trên canvas của pannellum
+        container.addEventListener("mousedown", handleMouseDown);
+
+        // Bắt move / up toàn cục để không bị hụt event khi kéo nhanh ra ngoài
+        window.addEventListener("mousemove", handleMouseMove);
+        window.addEventListener("mouseup", handleMouseUp);
+
+        mouseHandlers.current = { handleMouseDown, handleMouseMove, handleMouseUp };
+        mouseEventsAttached.current = true;
     };
+
 
     useEffect(() => {
         if (!viewerContainer.current || !scenes.length || !currentSceneId) return;
@@ -175,7 +202,21 @@ const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi'
             setupMouseEvents();
         });
 
-        return () => viewerInstance.current?.destroy();
+        return () => {
+            // Gỡ event chuột
+            if (mouseHandlers.current && viewerContainer.current) {
+                const { handleMouseDown, handleMouseMove, handleMouseUp } = mouseHandlers.current;
+
+                viewerContainer.current.removeEventListener("mousedown", handleMouseDown);
+                window.removeEventListener("mousemove", handleMouseMove);
+                window.removeEventListener("mouseup", handleMouseUp);
+            }
+
+            mouseEventsAttached.current = false;
+            mouseHandlers.current = null;
+
+            viewerInstance.current?.destroy();
+        };
     }, []);
 
     useEffect(() => {
