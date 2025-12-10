@@ -10,13 +10,6 @@ import {
     MapPin,
     Image as ImageIcon,
     ArrowLeft,
-    ArrowUp,
-    ArrowDown,
-    ArrowRight,
-    Info,
-    CircleHelp,
-    ExternalLink,
-    Globe
 } from "lucide-react";
 
 

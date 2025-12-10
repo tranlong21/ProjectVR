@@ -72,7 +72,6 @@ const AdminGallery = () => {
     const resolveImageUrl = (url) => {
         if (!url) return "";
         if (url.startsWith("http")) return url;
-        // backend đang trả /api/files/filename → nối với VITE_API_URL
         return `${API_BASE_URL}${url}`;
     };
 
