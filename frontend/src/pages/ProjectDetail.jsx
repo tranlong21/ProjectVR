@@ -34,31 +34,46 @@ const ProjectDetail = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // 1️⃣ Lấy project
                 const proj = await projectsService.getById(id);
                 setProject(proj);
 
+                // 2️⃣ Set tab mặc định
                 if (proj.has360) setActiveTab("360");
                 else if (proj.has3d) setActiveTab("3d");
                 else if (proj.hasGallery) setActiveTab("gallery");
                 else setActiveTab("info");
 
+                // 3️⃣ Load scenes (360)
                 if (proj.has360) {
                     const scenesData = await scenesService.getByProjectId(id);
-                    setScenes(scenesData);
+                    setScenes(scenesData || []);
 
-                    if (scenesData.length > 0) {
+                    if (scenesData && scenesData.length > 0) {
                         setCurrentSceneId(scenesData[0].id);
                     }
                 }
 
+                // 4️⃣ Load model 3D (CHỈ READY_FOR_WEB)
                 if (proj.has3d) {
                     const modelsData = await models3dService.getByProjectIdPublic(id);
+
                     if (modelsData && modelsData.length > 0) {
-                        setModel3d(modelsData[0]);
+                        const readyModel = modelsData.find(
+                            (m) => m.status === "READY_FOR_WEB"
+                        );
+
+                        // 👉 Chỉ set model khi đã sẵn sàng
+                        setModel3d(readyModel || null);
+                    } else {
+                        setModel3d(null);
                     }
+                } else {
+                    setModel3d(null);
                 }
             } catch (error) {
                 console.error("Error fetching project data:", error);
+                setModel3d(null);
             } finally {
                 setLoading(false);
             }
@@ -232,7 +247,10 @@ const ProjectDetail = () => {
                                 <div className="w-full h-[460px] rounded-xl overflow-hidden">
                                     {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
                                         <Viewer3D
-                                            modelUrl={model3d.modelUrl || model3d.fileUrl}
+                                            modelUrl={
+                                                import.meta.env.VITE_API_URL +
+                                                (model3d.modelUrl || model3d.fileUrl)
+                                            }
                                             description={modelDescription}
                                             lang={i18n.language}
                                             hotspots={model3d?.hotspots || []}

@@ -146,6 +146,10 @@ const AdminModels = () => {
 
         try {
             await modelsService.deleteModelAdmin(id);
+
+            setSelectedModel(null);
+            setHotspots([]);
+
             fetchModels(selectedProject.id);
         } catch (error) {
             console.error("Error deleting model:", error);
@@ -153,8 +157,16 @@ const AdminModels = () => {
         }
     };
 
-    const currentModel = models[0] || null;
-    
+    const currentModel = useMemo(() => {
+        return models.find(m => m.status === "READY_FOR_WEB") || null;
+    }, [models]);
+
+    useEffect(() => {
+        if (currentModel) {
+            setSelectedModel(currentModel);
+        }
+    }, [currentModel]);
+
     useEffect(() => {
         if (currentModel && currentModel.id) {
             fetchHotspots(currentModel.id);
@@ -168,12 +180,15 @@ const AdminModels = () => {
 
         return (
             <Viewer3D
-                key={selectedModel.id} // đổi model → remount sạch
-                modelUrl={selectedModel.fileUrl || selectedModel.modelUrl}
+                key={selectedModel.id}
+                modelUrl={
+                    selectedModel.modelUrl
+                        ? import.meta.env.VITE_API_URL + selectedModel.modelUrl
+                        : null
+                }
                 editMode={editMode}
                 hotspots={hotspots}
                 onAddHotspot={(pos, camPos, camTarget) => {
-                    // Chỉ cho phép khi đang bật mode chọn
                     if (!editMode) return;
 
                     setPendingHotspot({

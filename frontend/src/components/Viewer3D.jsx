@@ -172,10 +172,20 @@ const Viewer3D = ({
     hotspots = [],
     lang = "vi",
     editMode = false,
-    onAddHotspot = () => {},
-    onClickHotspot = () => {},
+    onAddHotspot = () => { },
+    onClickHotspot = () => { },
     description = "",
 }) => {
+    if (!modelUrl || modelUrl.includes("/raw/")) {
+        return (
+            <div className="w-full h-full bg-gray-900 flex items-center justify-center">
+                <p className="text-white text-sm">
+                    3D model is being processed...
+                </p>
+            </div>
+        );
+    }
+
     const modelRef = useRef(null);
     const controlsRef = useRef(null);
 
