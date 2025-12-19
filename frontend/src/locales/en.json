@@ -114,5 +114,13 @@
       "realtime_sync_title": "Real-time Sync",
       "realtime_sync_desc": "An architecture ready for multi-user scenarios: shared viewing, interactions and synchronized camera states."
     }
+  },
+  "gestureHelp": {
+    "title": "Hand Controls",
+    "cursor": "1 finger: Move cursor",
+    "click": "2 fingers: Click",
+    "rotate": "Open palm: Rotate view",
+    "zoomIn": "Pinch: Zoom in",
+    "zoomOut": "2 hands: Zoom out"
   }
 }

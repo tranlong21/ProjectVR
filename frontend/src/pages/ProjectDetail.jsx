@@ -33,49 +33,67 @@ const ProjectDetail = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            console.group("📦 ProjectDetail FETCH DATA");
+            setLoading(true);
+
             try {
-                // 1️⃣ Lấy project
+                // 1️⃣ PROJECT
+                console.log("➡️ Fetch project:", id);
                 const proj = await projectsService.getById(id);
+                console.log("✅ Project:", proj);
                 setProject(proj);
 
-                // 2️⃣ Set tab mặc định
+                // 2️⃣ TAB DEFAULT
                 if (proj.has360) setActiveTab("360");
                 else if (proj.has3d) setActiveTab("3d");
                 else if (proj.hasGallery) setActiveTab("gallery");
                 else setActiveTab("info");
 
-                // 3️⃣ Load scenes (360)
+                // 3️⃣ 360 SCENES
                 if (proj.has360) {
+                    console.log("➡️ Fetch 360 scenes");
                     const scenesData = await scenesService.getByProjectId(id);
+                    console.log("✅ Scenes:", scenesData);
                     setScenes(scenesData || []);
 
-                    if (scenesData && scenesData.length > 0) {
+                    if (scenesData?.length > 0) {
                         setCurrentSceneId(scenesData[0].id);
                     }
                 }
 
-                // 4️⃣ Load model 3D (CHỈ READY_FOR_WEB)
+                // 4️⃣ 3D MODEL (PUBLIC)
                 if (proj.has3d) {
+                    console.log("➡️ Fetch PUBLIC 3D models");
                     const modelsData = await models3dService.getByProjectIdPublic(id);
+                    console.log("📦 Raw models:", modelsData);
 
-                    if (modelsData && modelsData.length > 0) {
+                    if (!Array.isArray(modelsData) || modelsData.length === 0) {
+                        console.warn("⚠️ No public models returned");
+                        setModel3d(null);
+                    } else {
                         const readyModel = modelsData.find(
                             (m) => m.status === "READY_FOR_WEB"
                         );
 
-                        // 👉 Chỉ set model khi đã sẵn sàng
-                        setModel3d(readyModel || null);
-                    } else {
-                        setModel3d(null);
+                        if (!readyModel) {
+                            console.warn("⚠️ No READY_FOR_WEB model");
+                            setModel3d(null);
+                        } else {
+                            console.log("✅ READY_FOR_WEB model:", readyModel);
+                            setModel3d(readyModel);
+                        }
                     }
                 } else {
+                    console.log("ℹ️ Project has no 3D");
                     setModel3d(null);
                 }
-            } catch (error) {
-                console.error("Error fetching project data:", error);
+
+            } catch (err) {
+                console.error("❌ Fetch project detail failed:", err);
                 setModel3d(null);
             } finally {
                 setLoading(false);
+                console.groupEnd();
             }
         };
 
@@ -234,34 +252,52 @@ const ProjectDetail = () => {
                         {activeTab === '3d' && project.has3d && (
                             <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
 
-                                {/* <div className="mb-3 text-white">
-                                    <p className="font-semibold mb-1">
-                                        {i18n.language === 'vi' ? "Mô tả mô hình 3D" : "3D Model Description"}
-                                    </p>
+                                {/* ===== DEBUG LOG (USER) ===== */}
+                                {(() => {
+                                    console.group("🎯 USER TAB 3D DEBUG");
+                                    console.log("project.has3d:", project.has3d);
+                                    console.log("model3d:", model3d);
 
-                                    <p className="text-sm text-gray-300 flex-1">
-                                        {modelDescription}
-                                    </p>
-                                </div> */}
+                                    const finalModelUrl = model3d?.modelUrl
+                                        ? import.meta.env.VITE_API_URL + model3d.modelUrl
+                                        : model3d?.fileUrl
+                                            ? import.meta.env.VITE_API_URL + model3d.fileUrl
+                                            : null;
+
+                                    console.log("finalModelUrl:", finalModelUrl);
+                                    console.log("hotspots:", model3d?.hotspots || []);
+                                    console.groupEnd();
+                                    return null;
+                                })()}
+                                {/* ===== END DEBUG ===== */}
 
                                 <div className="w-full h-[460px] rounded-xl overflow-hidden">
                                     {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
                                         <Viewer3D
                                             modelUrl={
-                                                import.meta.env.VITE_API_URL +
-                                                (model3d.modelUrl || model3d.fileUrl)
+                                                model3d?.modelUrl
+                                                    ? import.meta.env.VITE_API_URL + model3d.modelUrl
+                                                    : model3d?.fileUrl
+                                                        ? import.meta.env.VITE_API_URL + model3d.fileUrl
+                                                        : null
                                             }
                                             description={modelDescription}
                                             lang={i18n.language}
                                             hotspots={model3d?.hotspots || []}
                                             editMode={false}
-                                            onClickHotspot={(h) => console.log("Clicked hotspot:", h)}
+                                            onClickHotspot={(h) =>
+                                                console.log("🟣 USER clicked hotspot:", h)
+                                            }
                                         />
                                     ) : (
                                         <div className="flex items-center justify-center h-full text-white">
                                             <div className="text-center">
-                                                <p className="text-xl font-bold mb-2">3D Model Not Available</p>
-                                                <p className="text-sm">The 3D model for this project is being prepared.</p>
+                                                <p className="text-xl font-bold mb-2">
+                                                    3D Model Not Available
+                                                </p>
+                                                <p className="text-sm">
+                                                    The 3D model for this project is being prepared.
+                                                </p>
                                             </div>
                                         </div>
                                     )}

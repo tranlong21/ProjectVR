@@ -1,275 +1,625 @@
-import React, { useEffect, useRef, useState } from 'react';
+/* --- FILE: src/components/Viewer360.js --- */
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import 'pannellum/build/pannellum.css';
 import 'pannellum';
 import { getPanoramaUrl } from '../utils/fileUtils';
+import HandTracker from '../gesture/HandTracker';
+import GestureCameraPreview from '../components/gesture-ui/GestureCameraPreview';
+import GestureHelpPanel from '../components/gesture-ui/GestureHelpPanel';
+import { GestureType } from "../gesture/GestureType";
 
-const Viewer360 = ({ scenes = [], initialSceneId = null, i18n = { language: 'vi' }, onClick, onSceneChange }) => {
+const Viewer360 = ({
+  scenes = [],
+  initialSceneId = null,
+  i18n = { language: 'vi' },
+  onSceneChange,
+}) => {
+  const wrapperRef = useRef(null);
+  const viewerContainer = useRef(null);
+  const viewerInstance = useRef(null);
 
-    const viewerContainer = useRef(null);
-    const viewerInstance = useRef(null);
+  const mouseEventsAttached = useRef(false);
+  const lastHoveredElement = useRef(null);
+  const lastClickTimeRef = useRef(0);
 
-    const isDragging = useRef(false);
-    const mouseDownPos = useRef(null);
-    const lastDragTime = useRef(0);
-    const isMouseDown = useRef(false);
-    const mouseHandlers = useRef(null);
-    const mouseEventsAttached = useRef(false);
+  // ✅ Track "effective" gesture to avoid flicker mixing actions
+  const prevGestureTypeRef = useRef(GestureType.NONE);
+  const stableTypeRef = useRef({ type: GestureType.NONE, count: 0 });
 
-    const [currentSceneId, setCurrentSceneId] = useState(
-        initialSceneId || (scenes.length ? scenes[0].id : null)
-    );
+  // ✅ Gesture ref (apply camera in RAF, not tied to React render)
+  const gestureRef = useRef(null);
+  const justReleasedPalmRef = useRef(false);
 
-    const getIconFile = (hotspot) => {
-        if (hotspot.type === "link_scene") return `/assets/icons/${hotspot.icon || "arrow_right"}.png`;
-        if (hotspot.type === "info") return "/assets/icons/info.png";
-        if (hotspot.type === "url") return "/assets/icons/link.png";
-        return null;
-    };
+  const rotateDragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    startYaw: 0,
+    startPitch: 0,
+  });
 
-    const getURLTitle = (hotspot) => {
-        return i18n.language === "vi"
-            ? hotspot.titleVi || hotspot.descriptionVi || "Liên kết ngoài"
-            : hotspot.titleEn || hotspot.descriptionEn || "External link";
-    };
+  const latestHandPosRef = useRef({
+    x: null,
+    y: null,
+  });
 
-    const buildHotspots = (scene) => {
-        return (scene.hotspots || []).map((hotspot) => ({
-            pitch: hotspot.pitch,
-            yaw: hotspot.yaw,
-            type: hotspot.type === "info" ? "info" : "custom",
+  const [vrEnabled, setVrEnabled] = useState(false);
+  const [gestureState, setGestureState] = useState(null);
+  const [cursorPos, setCursorPos] = useState({
+    x: 0,
+    y: 0,
+    visible: false,
+    isHovering: false
+  });
+  const [currentSceneId, setCurrentSceneId] = useState(initialSceneId || (scenes[0]?.id));
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-            text:
-                hotspot.type === "info"
-                    ? (i18n.language === 'vi'
-                        ? hotspot.titleVi || hotspot.descriptionVi
-                        : hotspot.titleEn || hotspot.descriptionEn)
-                    : undefined,
+  // ✅ viewer ready flag to avoid gesture actions before panorama loaded
+  const [viewerReady, setViewerReady] = useState(false);
 
-            createTooltipFunc:
-                hotspot.type !== "info"
-                    ? (div) => {
-                        div.classList.add("custom-hotspot");
+  // Normalize id to avoid number/string mismatch for scene switching
+  const normalizeId = (id) => (id == null ? '' : String(id));
 
-                        const iconPath = getIconFile(hotspot);
+  const noteRotateReset = () => {
+    rotateDragRef.current.active = false;
 
-                        div.innerHTML = `
-                            <img src="${iconPath}" class="hotspot-icon" />
-                            <div class="hotspot-tooltip"></div>
-                        `;
+    rotateDragRef.current.startX = 0;
+    rotateDragRef.current.startY = 0;
+    rotateDragRef.current.startYaw = 0;
+    rotateDragRef.current.startPitch = 0;
 
-                        const tooltip = div.querySelector(".hotspot-tooltip");
+    justReleasedPalmRef.current = true;
+  };
 
-                        if (hotspot.type === "link_scene") {
-                            const target = scenes.find(s => s.id === hotspot.targetSceneId);
-                            tooltip.innerText = target?.name || "Go to scene";
-                        }
+  const findHotspotAtPoint = (x, y) => {
+    const elements = document.elementsFromPoint(x, y);
 
-                        if (hotspot.type === "url") {
-                            tooltip.innerText = getURLTitle(hotspot);
-                        }
-                    }
-                    : null,
+    for (let el of elements) {
+      // 1) Custom hotspots (url/link_scene) - your own DOM
+      const custom = el.closest('.custom-hotspot');
+      if (custom) return custom;
 
-            clickHandlerFunc: () => {
-                if (hotspot.type === "link_scene") {
-                    setCurrentSceneId(hotspot.targetSceneId);
-                    if (onSceneChange) onSceneChange(hotspot.targetSceneId);
-                }
+      // 2) Pannellum default hotspots (info)
+      const pnlm = el.closest('.pnlm-hotspot') || el.closest('.pnlm-hotspot-base');
+      if (pnlm) return pnlm;
+    }
+    return null;
+  };
 
-                if (hotspot.type === "url") {
-                    const url =
-                        i18n.language === "vi"
-                            ? hotspot.descriptionVi
-                            : hotspot.descriptionEn;
-                    if (url) window.open(url, "_blank");
-                }
-            }
-        }));
-    };
+  const simulateHover = (targetElement, x, y) => {
+    // 1) clear old hover + fire mouseout to reset pannellum state
+    if (lastHoveredElement.current && lastHoveredElement.current !== targetElement) {
+      const prev = lastHoveredElement.current;
+      prev.classList.remove('force-hover', 'force-pnlm-hover');
 
-    const loadScene = (scene) => {
-        if (!viewerContainer.current) return;
+      prev.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, clientX: x, clientY: y }));
+      prev.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true, clientX: x, clientY: y }));
 
-        const panoramaUrl = getPanoramaUrl(scene.panoramaUrl);
+      lastHoveredElement.current = null;
+    }
 
-        try { viewerInstance.current?.destroy(); } catch { }
-
-        viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
-            type: "equirectangular",
-            panorama: panoramaUrl,
-            autoLoad: true,
-            showControls: true,
-            pitch: scene.initialPitch || 0,
-            yaw: scene.initialYaw || 0,
-            hfov: 110,
-            hotSpots: []
-        });
-
-        const hotspots = buildHotspots(scene);
-        hotspots.forEach(h => {
-            try { viewerInstance.current.addHotSpot(h); } catch { }
-        });
-
-        viewerInstance.current.on("load", () => {
-            setupMouseEvents();
-        });
-    };
-
-    const setupMouseEvents = () => {
-        const viewer = viewerInstance.current;
-        const container = viewerContainer.current;
-        if (!viewer || !container) return;
-
-        // Không gắn thêm lần 2
-        if (mouseEventsAttached.current && mouseHandlers.current) return;
-
-        const handleMouseDown = (event) => {
-            isMouseDown.current = true;
-            isDragging.current = false;
-            mouseDownPos.current = { x: event.clientX, y: event.clientY };
-        };
-
-        const handleMouseMove = (event) => {
-            if (!isMouseDown.current || !mouseDownPos.current) return;
-
-            const dx = Math.abs(event.clientX - mouseDownPos.current.x);
-            const dy = Math.abs(event.clientY - mouseDownPos.current.y);
-
-            // Vượt quá 5px coi như drag
-            if (dx > 5 || dy > 5) {
-                isDragging.current = true;
-            }
-        };
-
-        const handleMouseUp = (event) => {
-            if (!isMouseDown.current) return;
-
-            const wasDragging = isDragging.current;
-
-            isMouseDown.current = false;
-            isDragging.current = false;
-            mouseDownPos.current = null;
-
-            // Nếu vừa drag thì KHÔNG xử lý click
-            if (wasDragging || event.button !== 0) return;
-
-            // Đây mới là click thật → convert sang pitch / yaw
-            if (onClick && viewerInstance.current) {
-                const [pitch, yaw] = viewerInstance.current.mouseEventToCoords(event);
-                onClick(pitch, yaw);
-            }
-        };
-
-        // Bắt mousedown trên canvas của pannellum
-        container.addEventListener("mousedown", handleMouseDown);
-
-        // Bắt move / up toàn cục để không bị hụt event khi kéo nhanh ra ngoài
-        window.addEventListener("mousemove", handleMouseMove);
-        window.addEventListener("mouseup", handleMouseUp);
-
-        mouseHandlers.current = { handleMouseDown, handleMouseMove, handleMouseUp };
-        mouseEventsAttached.current = true;
-    };
-
-
-    useEffect(() => {
-        if (!viewerContainer.current || !scenes.length || !currentSceneId) return;
-
-        const scene = scenes.find((s) => s.id === currentSceneId);
-        if (!scene) return;
-
-        const panoUrl = getPanoramaUrl(scene.panoramaUrl);
-
-        viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
-            type: "equirectangular",
-            panorama: panoUrl,
-            autoLoad: true,
-            showControls: true,
-            pitch: scene.initialPitch || 0,
-            yaw: scene.initialYaw || 0,
-            hfov: 110,
-            hotSpots: []
-        });
-
-        const hotspots = buildHotspots(scene);
-        hotspots.forEach((h) => {
-            try {
-                viewerInstance.current.addHotSpot(h);
-            } catch { }
-        });
-
-        viewerInstance.current.on("load", () => {
-            setupMouseEvents();
-        });
-
-        return () => {
-            // Gỡ event chuột
-            if (mouseHandlers.current && viewerContainer.current) {
-                const { handleMouseDown, handleMouseMove, handleMouseUp } = mouseHandlers.current;
-
-                viewerContainer.current.removeEventListener("mousedown", handleMouseDown);
-                window.removeEventListener("mousemove", handleMouseMove);
-                window.removeEventListener("mouseup", handleMouseUp);
-            }
-
-            mouseEventsAttached.current = false;
-            mouseHandlers.current = null;
-
-            viewerInstance.current?.destroy();
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!viewerInstance.current) return;
-        if (!scenes.length) return;
-
-        const scene = scenes.find(s => s.id === currentSceneId);
-        if (!scene) return;
-
-        loadScene(scene);
-    }, [currentSceneId, scenes, i18n.language]);
-
-
-    const renderSceneSelector = () => {
-        if (scenes.length <= 1) return null;
-
-        return (
-            <div className="
-                absolute bottom-4 left-1/2 transform -translate-x-1/2 
-                flex space-x-2 bg-black/70 p-2 rounded-full 
-                backdrop-blur-sm z-10 max-w-[90%] overflow-x-auto no-scrollbar
-            ">
-                {scenes.map(scene => (
-                    <button
-                        key={scene.id}
-                        onClick={() => {
-                            setCurrentSceneId(scene.id);
-                            if (onSceneChange) onSceneChange(scene.id);
-                        }}
-                        className={`
-                            min-w-[60px] h-16 rounded-lg border-2 overflow-hidden transition-all 
-                            hover:scale-110
-                            ${currentSceneId === scene.id ? "border-blue-500" : "border-white/50"}
-                        `}
-                    >
-                        <img
-                            src={getPanoramaUrl(scene.panoramaUrl)}
-                            className="w-full h-full object-cover"
-                            alt={scene.name}
-                            onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
-                        />
-                    </button>
-                ))}
-            </div>
+    // 2) no target => fire mousemove on container so pannellum knows cursor left hotspot
+    if (!targetElement) {
+      if (viewerContainer.current) {
+        viewerContainer.current.dispatchEvent(
+          new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y })
         );
+      }
+      return;
+    }
+
+    // 3) CASE: custom hotspot (link_scene, url)
+    const custom = targetElement.classList.contains('custom-hotspot')
+      ? targetElement
+      : targetElement.closest('.custom-hotspot');
+
+    if (custom) {
+      custom.classList.add('force-hover');
+      custom.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: x, clientY: y }));
+      custom.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: x, clientY: y }));
+      custom.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y }));
+      lastHoveredElement.current = custom;
+      return;
+    }
+
+    // 4) CASE: pannellum info hotspot (FIX DỨT ĐIỂM)
+    const pnlmHotspot = targetElement.classList.contains('pnlm-hotspot-base')
+      ? targetElement
+      : targetElement.closest('.pnlm-hotspot-base');
+
+    if (pnlmHotspot) {
+      pnlmHotspot.classList.add('force-pnlm-hover');
+
+      // 🔑 BẮT BUỘC: báo cho pannellum rằng "chuột đang ở viewer"
+      if (viewerContainer.current) {
+        viewerContainer.current.dispatchEvent(
+          new MouseEvent('mousemove', {
+            bubbles: true,
+            clientX: x,
+            clientY: y,
+          })
+        );
+      }
+
+      // 🔑 BẮT BUỘC: đủ bộ event như chuột thật
+      pnlmHotspot.dispatchEvent(
+        new MouseEvent('mouseover', { bubbles: true, clientX: x, clientY: y })
+      );
+      pnlmHotspot.dispatchEvent(
+        new MouseEvent('mouseenter', { bubbles: true, clientX: x, clientY: y })
+      );
+      pnlmHotspot.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y })
+      );
+
+      lastHoveredElement.current = pnlmHotspot;
+      return;
+    }
+
+    // 5) fallback
+    lastHoveredElement.current = targetElement;
+  };
+
+  const openUrlSafely = (rawUrl) => {
+    if (!rawUrl) return;
+    const href = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`;
+    const a = document.createElement('a');
+    a.href = href;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.click();
+  };
+
+  const simulateClick = (targetElement) => {
+    if (targetElement) {
+      targetElement.classList.add('clicked-anim');
+      const clickEvent = new MouseEvent('click', { view: window, bubbles: true, cancelable: true });
+      targetElement.dispatchEvent(clickEvent);
+      setTimeout(() => targetElement.classList.remove('clicked-anim'), 200);
+    }
+  };
+
+  const getIconFile = (hotspot) => {
+    if (hotspot.type === 'link_scene') return `/assets/icons/${hotspot.icon || 'arrow_right'}.png`;
+    if (hotspot.type === 'info') return '/assets/icons/info.png';
+    if (hotspot.type === 'url') return '/assets/icons/link.png';
+    return null;
+  };
+
+  const buildHotspots = (scene) => {
+    return (scene.hotspots || []).map((hotspot) => ({
+      pitch: hotspot.pitch,
+      yaw: hotspot.yaw,
+      type: hotspot.type === 'info' ? 'info' : 'custom',
+      text: hotspot.type === 'info'
+        ? (i18n.language === 'vi'
+          ? (hotspot.titleVi || hotspot.descriptionVi)
+          : (hotspot.titleEn || hotspot.descriptionEn))
+        : undefined,
+      createTooltipFunc: hotspot.type !== 'info'
+        ? (div) => {
+          div.classList.add('custom-hotspot');
+          div.style.pointerEvents = 'auto';
+          const iconPath = getIconFile(hotspot);
+          const tooltipText = hotspot.type === 'link_scene'
+            ? (scenes.find(s => normalizeId(s.id) === normalizeId(hotspot.targetSceneId))?.name || 'Scene')
+            : (i18n.language === 'vi' ? hotspot.descriptionVi : hotspot.descriptionEn);
+
+          div.dataset.hotspotType = hotspot.type;
+          if (hotspot.type === 'link_scene') div.dataset.targetSceneId = hotspot.targetSceneId || '';
+          if (hotspot.type === 'url') div.dataset.url =
+            (i18n.language === 'vi' ? hotspot.descriptionVi : hotspot.descriptionEn) || '';
+
+          div.innerHTML =
+            `<img src="${iconPath}" class="hotspot-icon" />` +
+            `<div class="hotspot-tooltip">${tooltipText}</div>`;
+        }
+        : null,
+      clickHandlerFunc: () => {
+        if (hotspot.type === 'link_scene') {
+          setCurrentSceneId(normalizeId(hotspot.targetSceneId));
+          onSceneChange?.(hotspot.targetSceneId);
+        }
+        if (hotspot.type === 'url') {
+          const url = i18n.language === 'vi' ? hotspot.descriptionVi : hotspot.descriptionEn;
+          if (url) window.open(url.startsWith('http') ? url : `https://${url}`, '_blank');
+        }
+      },
+    }));
+  };
+
+  const loadScene = (scene) => {
+    if (!viewerContainer.current) return;
+
+    // ✅ lock gesture until viewer load finishes
+    setViewerReady(false);
+
+    // reset rotate anchors when switching scenes
+    noteRotateReset();
+
+    if (viewerInstance.current) {
+      try { viewerInstance.current.destroy(); } catch (e) { }
+    }
+
+    viewerInstance.current = window.pannellum.viewer(viewerContainer.current, {
+      type: 'equirectangular',
+      panorama: getPanoramaUrl(scene.panoramaUrl),
+      autoLoad: true,
+      showControls: false,
+      showFullscreen: false,
+      hfov: 100,
+      minHfov: 20,
+      maxHfov: 150,
+      hotSpots: [],
+    });
+
+    const spots = buildHotspots(scene);
+    spots.forEach(h => {
+      try { viewerInstance.current.addHotSpot(h); } catch (e) { }
+    });
+
+    viewerInstance.current.on('load', () => {
+      mouseEventsAttached.current = true;
+      setViewerReady(true);
+    });
+  };
+
+  // ✅ when VR toggles ON, reset refs to prevent jump / phantom actions
+  useEffect(() => {
+    if (vrEnabled) {
+      prevGestureTypeRef.current = GestureType.NONE;
+      stableTypeRef.current = { type: GestureType.NONE, count: 0 };
+      lastClickTimeRef.current = 0;
+      gestureRef.current = null;
+
+      noteRotateReset();
+
+      setCursorPos({ x: 0, y: 0, visible: false, isHovering: false });
+      simulateHover(null, 0, 0);
+    } else {
+      // when VR OFF also reset anchors
+      noteRotateReset();
+    }
+  }, [vrEnabled]);
+
+  useEffect(() => {
+    if (!vrEnabled) return;
+
+    let rafId = null;
+
+    const tick = () => {
+      const viewer = viewerInstance.current;
+      const g = gestureRef.current;
+
+      // ❌ viewer chưa sẵn sàng hoặc mất tracking
+      if (!viewer || !g || !g.isTracking || !viewerReady) {
+        if (rotateDragRef.current.active) {
+          noteRotateReset(); // mouseup cứng
+        }
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (justReleasedPalmRef.current) {
+        justReleasedPalmRef.current = false;
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (g.type !== GestureType.OPEN_PALM) {
+        if (rotateDragRef.current.active) {
+          noteRotateReset(); // ⬅️ reset NGAY LẬP TỨC
+        }
+      }
+
+      if (
+        g.type === GestureType.NONE ||
+        g.type === GestureType.CLOSED_FIST
+      ) {
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+
+      if (
+        g.type === GestureType.PINCH ||
+        g.type === GestureType.TWO_HANDS
+      ) {
+        const BASE_HFOV = 100;
+        const MIN_HFOV = 20;
+        const MAX_HFOV = 150;
+        const HFOV_LERP = 0.45;
+
+        const targetHfov = Math.max(
+          MIN_HFOV,
+          Math.min(MAX_HFOV, BASE_HFOV * (g.zoomFactor ?? 1))
+        );
+
+        const current = viewer.getHfov();
+        viewer.setHfov(current + (targetHfov - current) * HFOV_LERP);
+
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      if (g.type === GestureType.OPEN_PALM) {
+        if (
+          g.x < 0.02 || g.x > 0.98 ||
+          g.y < 0.02 || g.y > 0.98
+        ) {
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+
+        if (!rotateDragRef.current.active) {
+          rotateDragRef.current = {
+            active: true,
+            startX: g.x,
+            startY: g.y,
+            startYaw: viewer.getYaw(),
+            startPitch: viewer.getPitch(),
+          };
+
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+
+        const dx = g.x - rotateDragRef.current.startX;
+        const dy = g.y - rotateDragRef.current.startY;
+
+        if (Math.abs(dx) < 0.002 && Math.abs(dy) < 0.002) {
+          rafId = requestAnimationFrame(tick);
+          return;
+        }
+
+        const SENSITIVITY_YAW = 280;
+        const SENSITIVITY_PITCH = 280;
+
+        const nextYaw =
+          rotateDragRef.current.startYaw + dx * SENSITIVITY_YAW;
+
+        const nextPitch =
+          rotateDragRef.current.startPitch - dy * SENSITIVITY_PITCH;
+
+        viewer.setYaw(nextYaw);
+        viewer.setPitch(
+          Math.max(-85, Math.min(85, nextPitch))
+        );
+
+        rafId = requestAnimationFrame(tick);
+        return;
+      }
+
+      rafId = requestAnimationFrame(tick);
     };
 
-    return (
-        <div className="relative w-full h-full">
-            <div ref={viewerContainer} className="w-full h-full min-h-[400px] bg-gray-900" />
-            {renderSceneSelector()}
+    rafId = requestAnimationFrame(tick);
+    return () => rafId && cancelAnimationFrame(rafId);
+  }, [vrEnabled, viewerReady]);
+
+
+  const handleGestureUpdate = useCallback((state) => {
+    if (!viewerContainer.current) return;
+
+    setGestureState(state);
+    gestureRef.current = state;
+
+    if (!viewerReady) return;
+
+
+    const rect = viewerContainer.current.getBoundingClientRect();
+    const screenX = rect.left + state.x * rect.width;
+    const screenY = rect.top + state.y * rect.height;
+    const isInside = state.x >= 0 && state.x <= 1 && state.y >= 0 && state.y <= 1;
+
+    // ❌ MẤT TRACKING → RESET CỨNG
+    if (!state.isTracking) {
+      simulateHover(null, screenX, screenY);
+      setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
+      prevGestureTypeRef.current = GestureType.NONE;
+      noteRotateReset();
+      return;
+    }
+
+    const type = state.type;
+
+    // ✅ NONE / CLOSED_FIST → đứng im, không hover/cursor/click
+    if (type === GestureType.NONE || type === GestureType.CLOSED_FIST) {
+      simulateHover(null, screenX, screenY);
+      setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
+      prevGestureTypeRef.current = GestureType.NONE;
+      noteRotateReset();
+      return;
+    }
+
+    prevGestureTypeRef.current = type;
+
+    /* =========================
+       OPEN_PALM / ZOOM → CAMERA ONLY
+       ========================= */
+    if (
+      type === GestureType.OPEN_PALM ||
+      type === GestureType.PINCH ||
+      type === GestureType.TWO_HANDS
+    ) {
+      simulateHover(null, screenX, screenY);
+      setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
+      return;
+    }
+
+    /* =========================
+       CURSOR MODES
+       ========================= */
+    if (type === GestureType.ONE_FINGER || type === GestureType.TWO_FINGERS) {
+      const target = isInside ? findHotspotAtPoint(screenX, screenY) : null;
+
+      setCursorPos({
+        x: screenX,
+        y: screenY,
+        visible: isInside,
+        isHovering: !!target
+      });
+
+      if (isInside) simulateHover(target, screenX, screenY);
+      else simulateHover(null, screenX, screenY);
+
+      /* CLICK – TWO_FINGERS ONLY */
+      if (type === GestureType.TWO_FINGERS && target) {
+        const now = Date.now();
+        if (now - lastClickTimeRef.current > 450) {
+          // ✅ giữ logic click cũ (pannellum + custom)
+          // nếu là custom hotspot: ưu tiên đọc dataset
+          const hotspotEl = target.classList.contains('custom-hotspot')
+            ? target
+            : target.closest('.custom-hotspot');
+          const ds = hotspotEl?.dataset;
+
+          if (ds?.hotspotType === 'link_scene' && ds?.targetSceneId) {
+            setCurrentSceneId(normalizeId(ds.targetSceneId));
+            onSceneChange?.(ds.targetSceneId);
+          } else if (ds?.hotspotType === 'url' && ds?.url) {
+            openUrlSafely(ds.url);
+          } else {
+            // Pannellum info hotspot
+            simulateClick(target);
+          }
+
+          lastClickTimeRef.current = now;
+        }
+      }
+
+      return;
+    }
+
+    simulateHover(null, screenX, screenY);
+    setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
+  }, [viewerReady, onSceneChange]);
+
+  const stopVR = () => {
+    setVrEnabled(false);
+    setGestureState(null);
+    gestureRef.current = null;
+
+    noteRotateReset();
+
+    setCursorPos({ x: 0, y: 0, visible: false, isHovering: false });
+    simulateHover(null, 0, 0);
+    prevGestureTypeRef.current = GestureType.NONE;
+    stableTypeRef.current = { type: GestureType.NONE, count: 0 };
+  };
+
+  const handleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      wrapperRef.current?.requestFullscreen?.().catch(e => console.error(e));
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen?.();
+      setIsFullscreen(false);
+    }
+  };
+
+  useEffect(() => {
+    const s = scenes.find(x => normalizeId(x.id) === normalizeId(currentSceneId));
+    if (s) loadScene(s);
+  }, [currentSceneId, scenes]);
+
+  return (
+    <div ref={wrapperRef} className="relative w-full h-full bg-gray-900 group select-none overflow-hidden">
+      <style>{`
+        .pnlm-controls-container, .pnlm-fullscreen-toggle { display: none !important; }
+
+        /* Force-hover for both pannellum info hotspots and custom hotspots */
+        .pnlm-hotspot-base.force-hover .pnlm-tooltip span,
+        .pnlm-hotspot.force-hover .pnlm-tooltip span,
+        .custom-hotspot.force-hover .hotspot-tooltip {
+          visibility: visible !important;
+          opacity: 1 !important;
+        }
+
+        .clicked-anim { animation: clickPulse 0.2s; }
+        @keyframes clickPulse {
+          0% { transform: scale(1); }
+          50% { transform: scale(0.8); }
+          100% { transform: scale(1); }
+        }
+
+        .hotspot-icon { width: 28px; height: 28px; transition: transform 0.2s; }
+        .force-hover .hotspot-icon { transform: scale(1.2); }
+
+        .custom-hotspot, .custom-hotspot * { pointer-events: auto !important; }
+      `}</style>
+
+      <div ref={viewerContainer} className="w-full h-full" />
+
+      {vrEnabled && <div className="absolute inset-0 z-20 cursor-none" />}
+
+      {vrEnabled && cursorPos.visible && (
+        <div
+          className="fixed z-[100] pointer-events-none transition-transform duration-75 ease-out"
+          style={{
+            left: 0,
+            top: 0,
+            transform: `translate(${cursorPos.x}px, ${cursorPos.y}px)`
+          }}
+        >
+          <div
+            className={`w-4 h-4 -ml-4 -mt-4 rounded-full border-2 border-white shadow-xl
+              flex items-center justify-center transition-all duration-100
+              ${gestureState?.type === GestureType.TWO_FINGERS
+                ? 'bg-green-500 scale-125'
+                : 'bg-red-500/40'
+              }`}
+          >
+            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+          </div>
         </div>
-    );
+      )}
+
+      <HandTracker
+        isActive={vrEnabled}
+        onGestureUpdate={handleGestureUpdate}
+      />
+
+      <div className="absolute bottom-4 left-2 z-30 flex flex-col gap-2">
+        <button
+          onClick={handleFullscreen}
+          className="w-10 h-10 bg-white/90 rounded-xl flex items-center justify-center hover:bg-white shadow-lg active:scale-90 transition-all"
+        >
+          <img src="/assets/icons/fullscreen.png" className="w-5 h-5 opacity-80" alt="FS" />
+        </button>
+
+        <button
+          onClick={vrEnabled ? stopVR : () => setVrEnabled(true)}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-lg active:scale-90 transition-all
+            ${vrEnabled ? 'bg-purple-600 text-white' : 'bg-white/90 hover:bg-white'}`}
+        >
+          <img src="/assets/icons/vr.png" className="w-6 h-6" alt="VR" />
+        </button>
+      </div>
+
+      {vrEnabled && <GestureCameraPreview gestureState={gestureState} i18n={i18n} />}
+      {vrEnabled && <GestureHelpPanel i18n={i18n} />}
+
+      {scenes.length > 1 && (
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2 bg-black/70 p-2 rounded-full backdrop-blur-sm z-30 max-w-[90%] overflow-x-auto no-scrollbar border border-white/10">
+          {scenes.map((scene) => (
+            <button
+              key={scene.id}
+              onClick={() => { setCurrentSceneId(normalizeId(scene.id)); onSceneChange?.(scene.id); }}
+              className={`min-w-[60px] h-16 rounded-lg border-2 overflow-hidden transition-all hover:scale-110
+                ${normalizeId(currentSceneId) === normalizeId(scene.id) ? 'border-blue-500' : 'border-white/50'}`}
+            >
+              <img
+                src={getPanoramaUrl(scene.panoramaUrl)}
+                className="w-full h-full object-cover"
+                alt={scene.name}
+              />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export default Viewer360;

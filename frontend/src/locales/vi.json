@@ -115,5 +115,13 @@
             "realtime_sync_title": "Realtime Sync",
             "realtime_sync_desc": "Kiến trúc sẵn sàng cho nhiều người truy cập cùng lúc, chia sẻ góc nhìn và tương tác thời gian thực trong không gian VR."
         }
+    },
+    "gestureHelp": {
+        "title": "Điều khiển bằng tay",
+        "cursor": "1 ngón: Di chuyển con trỏ",
+        "click": "2 ngón: Click chọn",
+        "rotate": "Bàn tay mở: Xoay ảnh",
+        "zoomIn": "Chụm ngón: Phóng to",
+        "zoomOut": "2 tay: Thu nhỏ"
     }
 }

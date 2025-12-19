@@ -1,0 +1,9 @@
+export const GestureType = {
+  NONE: 'NONE',
+  ONE_FINGER: 'ONE_FINGER',
+  TWO_FINGERS: 'TWO_FINGERS',
+  OPEN_PALM: 'OPEN_PALM',
+  PINCH: 'PINCH',
+  TWO_HANDS: 'TWO_HANDS',
+  CLOSED_FIST: 'CLOSED_FIST', 
+};
