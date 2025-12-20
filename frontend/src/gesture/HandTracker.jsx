@@ -15,12 +15,15 @@ const HandTracker = ({ onGestureUpdate, isActive }) => {
     type: GestureType.NONE,
     x: 0.5,
     y: 0.5,
-    deltaX: 0,
-    deltaY: 0,
-    zoomFactor: 1,
+    zoomFactor: 1.0,
     isTracking: false,
-    prevRawX: null,
-    prevRawY: null,
+
+    // Internal smoothing buffers
+    _smoothX: 0.5,
+    _smoothY: 0.5,
+    _targetZoom: 1.0,
+    _pendingType: GestureType.NONE,
+    _pendingCount: 0,
   });
 
   useEffect(() => {
@@ -29,12 +32,15 @@ const HandTracker = ({ onGestureUpdate, isActive }) => {
         type: GestureType.NONE,
         x: 0.5,
         y: 0.5,
-        deltaX: 0,
-        deltaY: 0,
-        zoomFactor: 1,
+        zoomFactor: 1.0,
         isTracking: false,
-        prevRawX: null,
-        prevRawY: null,
+
+        // Internal smoothing buffers
+        _smoothX: 0.5,
+        _smoothY: 0.5,
+        _targetZoom: 1.0,
+        _pendingType: GestureType.NONE,
+        _pendingCount: 0,
       };
       return;
     }

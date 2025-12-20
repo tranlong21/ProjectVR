@@ -86,78 +86,51 @@ const Viewer360 = ({
     return null;
   };
 
-  const simulateHover = (targetElement, x, y) => {
-    // 1) clear old hover + fire mouseout to reset pannellum state
+  const simulateHover = (targetElement, x, y, isGesture = true) => {
+    // 1) Handle LEAVING a hotspot
     if (lastHoveredElement.current && lastHoveredElement.current !== targetElement) {
       const prev = lastHoveredElement.current;
       prev.classList.remove('force-hover', 'force-pnlm-hover');
 
+      // Dispatch "leave" events to clear tooltips
       prev.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, clientX: x, clientY: y }));
       prev.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true, clientX: x, clientY: y }));
 
       lastHoveredElement.current = null;
     }
 
-    // 2) no target => fire mousemove on container so pannellum knows cursor left hotspot
-    if (!targetElement) {
-      if (viewerContainer.current) {
-        viewerContainer.current.dispatchEvent(
-          new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y })
-        );
-      }
-      return;
-    }
-
-    // 3) CASE: custom hotspot (link_scene, url)
-    const custom = targetElement.classList.contains('custom-hotspot')
-      ? targetElement
-      : targetElement.closest('.custom-hotspot');
-
-    if (custom) {
-      custom.classList.add('force-hover');
-      custom.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: x, clientY: y }));
-      custom.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: x, clientY: y }));
-      custom.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y }));
-      lastHoveredElement.current = custom;
-      return;
-    }
-
-    // 4) CASE: pannellum info hotspot (FIX DỨT ĐIỂM)
-    const pnlmHotspot = targetElement.classList.contains('pnlm-hotspot-base')
-      ? targetElement
-      : targetElement.closest('.pnlm-hotspot-base');
-
-    if (pnlmHotspot) {
-      pnlmHotspot.classList.add('force-pnlm-hover');
-
-      // 🔑 BẮT BUỘC: báo cho pannellum rằng "chuột đang ở viewer"
-      if (viewerContainer.current) {
-        viewerContainer.current.dispatchEvent(
-          new MouseEvent('mousemove', {
-            bubbles: true,
-            clientX: x,
-            clientY: y,
-          })
-        );
-      }
-
-      // 🔑 BẮT BUỘC: đủ bộ event như chuột thật
-      pnlmHotspot.dispatchEvent(
-        new MouseEvent('mouseover', { bubbles: true, clientX: x, clientY: y })
-      );
-      pnlmHotspot.dispatchEvent(
-        new MouseEvent('mouseenter', { bubbles: true, clientX: x, clientY: y })
-      );
-      pnlmHotspot.dispatchEvent(
+    // 2) Always keep Pannellum alive with mousemove on container (prevents idle timeout)
+    // ONLY if it comes from Gesture (prevent spamming real mouse)
+    if (isGesture && viewerContainer.current) {
+      viewerContainer.current.dispatchEvent(
         new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y })
       );
-
-      lastHoveredElement.current = pnlmHotspot;
-      return;
     }
 
-    // 5) fallback
-    lastHoveredElement.current = targetElement;
+    if (!targetElement) return;
+
+    // 3) Handle ENTERING a hotspot
+    let actualTarget = targetElement;
+
+    // Resolve Custom Hotspots
+    if (targetElement.classList.contains('custom-hotspot') || targetElement.closest('.custom-hotspot')) {
+      actualTarget = targetElement.closest('.custom-hotspot') || targetElement;
+      actualTarget.classList.add('force-hover');
+    }
+    // Resolve Pannellum Info Hotspots
+    else if (targetElement.classList.contains('pnlm-hotspot-base') || targetElement.closest('.pnlm-hotspot-base')) {
+      actualTarget = targetElement.closest('.pnlm-hotspot-base') || targetElement;
+      // FIX: Add BOTH classes to ensure inline styles (force-hover) AND global styles (force-pnlm-hover) work
+      actualTarget.classList.add('force-pnlm-hover', 'force-hover');
+    }
+
+    // Dispatch Events to trigger internal listeners
+    if (actualTarget) {
+      actualTarget.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, clientX: x, clientY: y }));
+      actualTarget.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true, clientX: x, clientY: y }));
+      actualTarget.dispatchEvent(new MouseEvent('mousemove', { bubbles: true, clientX: x, clientY: y }));
+      lastHoveredElement.current = actualTarget;
+    }
   };
 
   const openUrlSafely = (rawUrl) => {
@@ -291,66 +264,55 @@ const Viewer360 = ({
       const viewer = viewerInstance.current;
       const g = gestureRef.current;
 
-      // ❌ viewer chưa sẵn sàng hoặc mất tracking
+      // Ensure viewer and tracking are ready
       if (!viewer || !g || !g.isTracking || !viewerReady) {
         if (rotateDragRef.current.active) {
-          noteRotateReset(); // mouseup cứng
+          noteRotateReset();
         }
         rafId = requestAnimationFrame(tick);
         return;
       }
 
-      if (justReleasedPalmRef.current) {
-        justReleasedPalmRef.current = false;
-        rafId = requestAnimationFrame(tick);
-        return;
-      }
-
+      // STRICT ROTATION: ONLY OPEN_PALM
       if (g.type !== GestureType.OPEN_PALM) {
         if (rotateDragRef.current.active) {
-          noteRotateReset(); // ⬅️ reset NGAY LẬP TỨC
+          noteRotateReset();
         }
       }
 
-      if (
-        g.type === GestureType.NONE ||
-        g.type === GestureType.CLOSED_FIST
-      ) {
-        rafId = requestAnimationFrame(tick);
-        return;
-      }
-
-
+      // ZOOM HANDLER (PINCH or TWO_HANDS)
+      // We rely on g.zoomFactor which is now smooth and stateful from Analyzer
       if (
         g.type === GestureType.PINCH ||
         g.type === GestureType.TWO_HANDS
       ) {
+        // Base FOV logic
         const BASE_HFOV = 100;
         const MIN_HFOV = 20;
         const MAX_HFOV = 150;
-        const HFOV_LERP = 0.45;
 
-        const targetHfov = Math.max(
-          MIN_HFOV,
-          Math.min(MAX_HFOV, BASE_HFOV * (g.zoomFactor ?? 1))
-        );
+        // Map zoomFactor to HFOV
+        // Factor 1 = 100, Factor 0.5 = 50, Factor 2 = 150 (Clamped)
+        /* 
+           NOTE: In Analyzer, PINCH decreases factor (Zoom In), TWO_HANDS increases (Zoom Out).
+           Result: Factor < 1 => Zoomed In. Factor > 1 => Zoomed Out.
+           FOV = BASE * factor.
+         */
+        let targetHfov = BASE_HFOV * g.zoomFactor;
+        targetHfov = Math.max(MIN_HFOV, Math.min(MAX_HFOV, targetHfov));
 
-        const current = viewer.getHfov();
-        viewer.setHfov(current + (targetHfov - current) * HFOV_LERP);
+        const currentHfov = viewer.getHfov();
+        // Additional local smoothing if needed, but analyzer output is already smooth-ish.
+        // Adding a bit of local lerp for extra butter.
+        const LERP = 0.2;
+        const nextHfov = currentHfov + (targetHfov - currentHfov) * LERP;
 
-        rafId = requestAnimationFrame(tick);
-        return;
+        viewer.setHfov(nextHfov);
       }
 
+      // ROTATION HANDLER (OPEN_PALM)
       if (g.type === GestureType.OPEN_PALM) {
-        if (
-          g.x < 0.02 || g.x > 0.98 ||
-          g.y < 0.02 || g.y > 0.98
-        ) {
-          rafId = requestAnimationFrame(tick);
-          return;
-        }
-
+        // Init drag anchor if not active
         if (!rotateDragRef.current.active) {
           rotateDragRef.current = {
             active: true,
@@ -359,35 +321,20 @@ const Viewer360 = ({
             startYaw: viewer.getYaw(),
             startPitch: viewer.getPitch(),
           };
+        } else {
+          // Calculate delta from anchor
+          const dx = g.x - rotateDragRef.current.startX;
+          const dy = g.y - rotateDragRef.current.startY;
 
-          rafId = requestAnimationFrame(tick);
-          return;
+          const SENSITIVITY_YAW = 420; // Increased for better responsiveness
+          const SENSITIVITY_PITCH = 420;
+
+          const nextYaw = rotateDragRef.current.startYaw + dx * SENSITIVITY_YAW;
+          const nextPitch = rotateDragRef.current.startPitch - dy * SENSITIVITY_PITCH;
+
+          viewer.setYaw(nextYaw);
+          viewer.setPitch(Math.max(-85, Math.min(85, nextPitch)));
         }
-
-        const dx = g.x - rotateDragRef.current.startX;
-        const dy = g.y - rotateDragRef.current.startY;
-
-        if (Math.abs(dx) < 0.002 && Math.abs(dy) < 0.002) {
-          rafId = requestAnimationFrame(tick);
-          return;
-        }
-
-        const SENSITIVITY_YAW = 280;
-        const SENSITIVITY_PITCH = 280;
-
-        const nextYaw =
-          rotateDragRef.current.startYaw + dx * SENSITIVITY_YAW;
-
-        const nextPitch =
-          rotateDragRef.current.startPitch - dy * SENSITIVITY_PITCH;
-
-        viewer.setYaw(nextYaw);
-        viewer.setPitch(
-          Math.max(-85, Math.min(85, nextPitch))
-        );
-
-        rafId = requestAnimationFrame(tick);
-        return;
       }
 
       rafId = requestAnimationFrame(tick);
@@ -406,51 +353,28 @@ const Viewer360 = ({
 
     if (!viewerReady) return;
 
-
     const rect = viewerContainer.current.getBoundingClientRect();
     const screenX = rect.left + state.x * rect.width;
     const screenY = rect.top + state.y * rect.height;
+
     const isInside = state.x >= 0 && state.x <= 1 && state.y >= 0 && state.y <= 1;
 
-    // ❌ MẤT TRACKING → RESET CỨNG
-    if (!state.isTracking) {
-      simulateHover(null, screenX, screenY);
-      setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
-      prevGestureTypeRef.current = GestureType.NONE;
-      noteRotateReset();
-      return;
-    }
+    // Reset cursor if lost tracking or non-interactive gesture
+    if (!state.isTracking ||
+      state.type === GestureType.NONE ||
+      state.type === GestureType.CLOSED_FIST ||
+      state.type === GestureType.OPEN_PALM ||
+      state.type === GestureType.PINCH ||
+      state.type === GestureType.TWO_HANDS) {
 
-    const type = state.type;
-
-    // ✅ NONE / CLOSED_FIST → đứng im, không hover/cursor/click
-    if (type === GestureType.NONE || type === GestureType.CLOSED_FIST) {
-      simulateHover(null, screenX, screenY);
-      setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
-      prevGestureTypeRef.current = GestureType.NONE;
-      noteRotateReset();
-      return;
-    }
-
-    prevGestureTypeRef.current = type;
-
-    /* =========================
-       OPEN_PALM / ZOOM → CAMERA ONLY
-       ========================= */
-    if (
-      type === GestureType.OPEN_PALM ||
-      type === GestureType.PINCH ||
-      type === GestureType.TWO_HANDS
-    ) {
-      simulateHover(null, screenX, screenY);
+      // ✅ Pass false to avoid spamming container mousemove, allowing real mouse to work
+      simulateHover(null, screenX, screenY, false);
       setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
       return;
     }
 
-    /* =========================
-       CURSOR MODES
-       ========================= */
-    if (type === GestureType.ONE_FINGER || type === GestureType.TWO_FINGERS) {
+    // INTERACTIVE MODES (ONE_FINGER, TWO_FINGERS)
+    if (state.type === GestureType.ONE_FINGER || state.type === GestureType.TWO_FINGERS) {
       const target = isInside ? findHotspotAtPoint(screenX, screenY) : null;
 
       setCursorPos({
@@ -460,15 +384,13 @@ const Viewer360 = ({
         isHovering: !!target
       });
 
-      if (isInside) simulateHover(target, screenX, screenY);
-      else simulateHover(null, screenX, screenY);
+      // Pass screen coordinates explicitly to simulateHover
+      simulateHover(isInside ? target : null, screenX, screenY);
 
-      /* CLICK – TWO_FINGERS ONLY */
-      if (type === GestureType.TWO_FINGERS && target) {
+      // CLICK ACTION (TWO_FINGERS)
+      if (state.type === GestureType.TWO_FINGERS && target) {
         const now = Date.now();
-        if (now - lastClickTimeRef.current > 450) {
-          // ✅ giữ logic click cũ (pannellum + custom)
-          // nếu là custom hotspot: ưu tiên đọc dataset
+        if (now - lastClickTimeRef.current > 600) { // Slight debounce increase
           const hotspotEl = target.classList.contains('custom-hotspot')
             ? target
             : target.closest('.custom-hotspot');
@@ -480,19 +402,13 @@ const Viewer360 = ({
           } else if (ds?.hotspotType === 'url' && ds?.url) {
             openUrlSafely(ds.url);
           } else {
-            // Pannellum info hotspot
             simulateClick(target);
           }
 
           lastClickTimeRef.current = now;
         }
       }
-
-      return;
     }
-
-    simulateHover(null, screenX, screenY);
-    setCursorPos(p => ({ ...p, visible: false, isHovering: false }));
   }, [viewerReady, onSceneChange]);
 
   const stopVR = () => {
@@ -551,7 +467,7 @@ const Viewer360 = ({
 
       <div ref={viewerContainer} className="w-full h-full" />
 
-      {vrEnabled && <div className="absolute inset-0 z-20 cursor-none" />}
+      {vrEnabled && <div className="absolute inset-0 z-20 pointer-events-none" />}
 
       {vrEnabled && cursorPos.visible && (
         <div
