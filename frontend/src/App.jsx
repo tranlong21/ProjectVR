@@ -21,6 +21,8 @@ import Portfolio from './pages/Portfolio';
 import Technology from './pages/Technology';
 import BlogList from './pages/BlogList';
 import BlogDetail from './pages/BlogDetail';
+import Vr360 from './pages/solutions/Vr360';
+import SolutionCategory from './pages/solutions/SolutionCategory';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -33,7 +35,7 @@ import AdminGallery from './pages/admin/AdminGallery';
 
 const App = () => {
 
-    const { user } = useAuthStore();  
+    const { user } = useAuthStore();
 
     return (
         <Routes>
@@ -57,6 +59,9 @@ const App = () => {
                 <Route path="/projects" element={<ProjectList />} />
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/services" element={<Services />} />
+                <Route path="/solution/vr-360" element={<Vr360 />} />
+                <Route path="/solution/:category" element={<SolutionCategory />} />
+                {/* Kept old route for backward compatibility if needed, or redirect */}
                 <Route path="/solutions" element={<Solutions />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/technology" element={<Technology />} />

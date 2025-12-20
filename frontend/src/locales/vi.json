@@ -13,7 +13,17 @@
         "logout": "Đăng Xuất",
         "dashboard": "Bảng Điều Khiển",
         "admin": "Quản Trị",
-        "contact": "Liên Hệ"
+        "contact": "Liên Hệ",
+        "solutions_menu": {
+            "vr360": "VR 360",
+            "thai_bike": "Đua Xe Đạp Thái (Game)",
+            "real_estate": "Bất Động Sản",
+            "tourism": "Du Lịch",
+            "culture": "Văn Hóa",
+            "education": "Giáo Dục",
+            "historical_sites": "Di Tích Lịch Sử",
+            "technology": "Công Nghệ"
+        }
     },
     "hero": {
         "title": "Trải Nghiệm Tương Lai Của Thực Tế",

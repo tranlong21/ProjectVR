@@ -13,7 +13,17 @@
     "logout": "Logout",
     "dashboard": "Dashboard",
     "admin": "Admin",
-    "contact": "Contact"
+    "contact": "Contact",
+    "solutions_menu": {
+      "vr360": "VR 360",
+      "thai_bike": "Thai Bike Racing (Game)",
+      "real_estate": "Real Estate",
+      "tourism": "Tourism",
+      "culture": "Culture",
+      "education": "Education",
+      "historical_sites": "Historical Sites",
+      "technology": "Technology"
+    }
   },
   "hero": {
     "title": "Experience the Future of Reality",
