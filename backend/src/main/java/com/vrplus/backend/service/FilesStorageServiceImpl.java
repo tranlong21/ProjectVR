@@ -1,57 +1,80 @@
 package com.vrplus.backend.service;
 
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
-import java.util.stream.Stream;
-
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
+import java.util.stream.Stream;
+
 @Service
 public class FilesStorageServiceImpl implements FilesStorageService {
 
-    private final Path root = Paths.get("uploads");
+    @Value("${storage.upload-root:uploads}")
+    private String uploadRoot;
 
+    private Path root;
+
+    @PostConstruct
     @Override
     public void init() {
         try {
+            root = Paths.get(uploadRoot).normalize().toAbsolutePath();
             Files.createDirectories(root);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not initialize folder for upload!");
-        }
-    }
-
-    @Override
-    public String save(MultipartFile file) {
-        try {
-            String filename = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
-            Files.copy(file.getInputStream(), this.root.resolve(filename));
-            return filename;
         } catch (Exception e) {
-            throw new RuntimeException("Could not store the file. Error: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
     @Override
-    public Resource load(String filename) {
+    public String storeFile(MultipartFile file, String subFolder) {
         try {
-            Path file = root.resolve(filename);
-            Resource resource = new UrlResource(file.toUri());
+            String filename = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            Path folder = root.resolve(subFolder);
+            Files.createDirectories(folder);
+            Path target = folder.resolve(filename);
+            Files.copy(file.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+            return "/uploads/" + subFolder + "/" + filename;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-            if (resource.exists() || resource.isReadable()) {
+    @Override
+    public void deleteFile(String fileUrl) {
+        try {
+            Path path = resolvePathFromUrl(fileUrl);
+            Files.deleteIfExists(path);
+        } catch (Exception ignored) {
+        }
+    }
+
+    @Override
+    public Path resolvePathFromUrl(String fileUrl) {
+        String relative = fileUrl.replaceFirst("^/uploads/", "");
+        return root.resolve(relative);
+    }
+
+    @Override
+    public Resource load(String fileUrl) {
+        try {
+            Path file = resolvePathFromUrl(fileUrl);
+            Resource resource = new UrlResource(file.toUri());
+            if (resource.exists() && resource.isReadable()) {
                 return resource;
-            } else {
-                throw new RuntimeException("Could not read the file!");
             }
+            throw new RuntimeException();
         } catch (MalformedURLException e) {
-            throw new RuntimeException("Error: " + e.getMessage());
+            throw new RuntimeException(e);
         }
     }
 
@@ -63,9 +86,9 @@ public class FilesStorageServiceImpl implements FilesStorageService {
     @Override
     public Stream<Path> loadAll() {
         try {
-            return Files.walk(this.root, 1).filter(path -> !path.equals(this.root)).map(this.root::relativize);
-        } catch (IOException e) {
-            throw new RuntimeException("Could not load the files!");
+            return Files.walk(root, 1).filter(p -> !p.equals(root));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

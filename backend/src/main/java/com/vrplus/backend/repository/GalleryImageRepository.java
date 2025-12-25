@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface GalleryImageRepository extends JpaRepository<GalleryImage, Long> {
     List<GalleryImage> findByProjectId(Long projectId);
+
+    boolean existsByProjectId(Long id);
 }

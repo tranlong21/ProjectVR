@@ -19,6 +19,13 @@ public class Model3D {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    private String rawFilePath;
+    private String webFilePath;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ModelProcessStatus status;
+
     private String name;
     private String category;
 
@@ -46,5 +53,4 @@ public class Model3D {
     @JoinColumn(name = "model_id")
     @JsonIgnoreProperties({"scene", "model"})
     private List<Hotspot> hotspots;
-
 }

@@ -11,4 +11,6 @@ public interface SceneRepository extends JpaRepository<Scene, Long> {
     List<Scene> findByProjectId(Long projectId);
 
     List<Scene> findByProjectIdOrderByOrderIndexAsc(Long projectId);
+
+    boolean existsByProjectId(Long projectId);
 }

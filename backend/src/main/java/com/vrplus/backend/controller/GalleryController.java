@@ -3,6 +3,7 @@ package com.vrplus.backend.controller;
 import com.vrplus.backend.model.GalleryImage;
 import com.vrplus.backend.repository.GalleryImageRepository;
 import com.vrplus.backend.repository.ProjectRepository;
+import com.vrplus.backend.service.IGalleryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,42 +16,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/gallery")
 public class GalleryController {
-
     @Autowired
-    private GalleryImageRepository galleryRepo;
-
-    @Autowired
-    private ProjectRepository projectRepo;
-
+    private IGalleryService galleryService;
 
     @GetMapping("/project/{projectId}")
-    public List<GalleryImage> getGalleryByProject(@PathVariable Long projectId) {
-        return galleryRepo.findByProjectId(projectId);
+    public ResponseEntity<?> getByProject(@PathVariable Long projectId) {
+        return ResponseEntity.ok(galleryService.getByProjectId(projectId));
     }
 
 
-    @PostMapping("/project/{projectId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> createGalleryImage(
-            @PathVariable Long projectId,
-            @RequestBody GalleryImage img) {
-
-        return projectRepo.findById(projectId).map(project -> {
-            img.setProject(project);
-            GalleryImage saved = galleryRepo.save(img);
-            return new ResponseEntity<>(saved, HttpStatus.CREATED);
-        }).orElseThrow(() -> new RuntimeException("Project not found with ID: " + projectId));
-    }
-
-
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteGalleryImage(@PathVariable Long id) {
-        if (!galleryRepo.existsById(id)) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Gallery image not found");
-        }
-        galleryRepo.deleteById(id);
-        return ResponseEntity.noContent().build();
-    }
 }

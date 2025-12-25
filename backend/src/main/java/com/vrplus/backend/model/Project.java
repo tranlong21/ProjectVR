@@ -54,8 +54,13 @@ public class Project {
 
     private boolean featured;
 
+    @Transient
     private boolean has360;
+
+    @Transient
     private boolean has3d;
+
+    @Transient
     private boolean hasGallery;
 
     @CreationTimestamp

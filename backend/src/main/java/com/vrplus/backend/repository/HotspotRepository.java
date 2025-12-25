@@ -8,10 +8,6 @@ import java.util.List;
 
 @Repository
 public interface HotspotRepository extends JpaRepository<Hotspot, Long> {
-
-    //scene
     List<Hotspot> findBySceneId(Long sceneId);
-
-    // model
     List<Hotspot> findByModelId(Long modelId);
 }
