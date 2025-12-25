@@ -10,7 +10,7 @@ const BlogsSection = () => {
     useEffect(() => {
         const fetchBlogs = async () => {
             try {
-                const data = await blogPostsService.getAll();
+                const data = await blogPostsService.getAllPublished();
                 const blogList = Array.isArray(data) ? data : (data.content || []);
                 setBlogs(blogList.slice(0, 3));
             } catch (error) {
