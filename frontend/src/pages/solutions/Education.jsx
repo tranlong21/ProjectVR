@@ -6,11 +6,6 @@ import {
   ArrowRight,
   CheckCircle,
   GraduationCap,
-  Building2,
-  Users,
-  Globe,
-  Layers,
-  Camera,
   Cpu
 } from 'lucide-react';
 

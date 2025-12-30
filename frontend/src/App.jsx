@@ -16,7 +16,6 @@ import ProjectList from './pages/ProjectList';
 import ProjectDetail from './pages/ProjectDetail';
 import UserDashboard from './pages/UserDashboard';
 import Services from './pages/Services';
-import Solutions from './pages/Solutions';
 import Portfolio from './pages/Portfolio';
 import Technology from './pages/Technology';
 import BlogList from './pages/BlogList';
@@ -70,7 +69,6 @@ const App = () => {
                 <Route path="/solution/tourism" element={<Tourism />} />
                 <Route path="/solution/:category" element={<SolutionCategory />} />
                 {/* Kept old route for backward compatibility if needed, or redirect */}
-                <Route path="/solutions" element={<Solutions />} />
                 <Route path="/portfolio" element={<Portfolio />} />
                 <Route path="/technology" element={<Technology />} />
                 <Route path="/blog" element={<BlogList />} />

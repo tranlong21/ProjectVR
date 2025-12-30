@@ -69,9 +69,8 @@ const Register = () => {
                             type="text"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${
-                                errors.username ? 'focus:ring-red-500' : 'focus:ring-blue-500'
-                            }`}
+                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${errors.username ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+                                }`}
                         />
                         {errors.username && (
                             <span className="text-red-400 text-sm mt-1 block">
@@ -87,9 +86,8 @@ const Register = () => {
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${
-                                errors.email ? 'focus:ring-red-500' : 'focus:ring-blue-500'
-                            }`}
+                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${errors.email ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+                                }`}
                         />
                         {errors.email && (
                             <span className="text-red-400 text-sm mt-1 block">
@@ -105,9 +103,8 @@ const Register = () => {
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${
-                                errors.password ? 'focus:ring-red-500' : 'focus:ring-blue-500'
-                            }`}
+                            className={`w-full bg-gray-700 text-white rounded px-4 py-2 focus:outline-none focus:ring-2 ${errors.password ? 'focus:ring-red-500' : 'focus:ring-blue-500'
+                                }`}
                         />
                         {errors.password && (
                             <span className="text-red-400 text-sm mt-1 block">
@@ -132,6 +129,14 @@ const Register = () => {
                             Login here
                         </Link>
                     </p>
+                </div>
+                <div className="mt-2 text-center">
+                    <Link
+                        to="/"
+                        className="text-gray-400 hover:text-white text-sm transition"
+                    >
+                        ← Quay về Trang chủ
+                    </Link>
                 </div>
             </div>
         </div>
