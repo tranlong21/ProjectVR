@@ -260,7 +260,7 @@ const Vr360 = () => {
                                 {isVi ? 'Đua Xe Đạp Thái' : 'Thai Bike Racing'}
                             </h3>
                             <p className="text-xl font-medium text-[var(--text-primary)] mb-1 italic">
-                                {isVi ? '"Xe không thắng"' : '"Bicycle without brakes"'}
+                                {isVi ? '"Xe đạp không thắng, lái một tay mới chất."' : '"A bicycle without brakes, ridden with one hand is the coolest."'}
                             </p>
                             <p className="text-sm text-[var(--text-secondary)] mb-6">
                                 {isVi

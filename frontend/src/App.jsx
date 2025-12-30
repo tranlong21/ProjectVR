@@ -22,6 +22,10 @@ import Technology from './pages/Technology';
 import BlogList from './pages/BlogList';
 import BlogDetail from './pages/BlogDetail';
 import Vr360 from './pages/solutions/Vr360';
+import Education from './pages/solutions/Education';
+import HistoricalSites from './pages/solutions/HistoricalSites';
+import RealEstate from './pages/solutions/RealEstate';
+import Tourism from './pages/solutions/Tourism';
 import SolutionCategory from './pages/solutions/SolutionCategory';
 
 // Admin Pages
@@ -60,6 +64,10 @@ const App = () => {
                 <Route path="/projects/:id" element={<ProjectDetail />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/solution/vr-360" element={<Vr360 />} />
+                <Route path="/solution/education" element={<Education />} />
+                <Route path="/solution/historical-sites" element={<HistoricalSites />} />
+                <Route path="/solution/real-estate" element={<RealEstate />} />
+                <Route path="/solution/tourism" element={<Tourism />} />
                 <Route path="/solution/:category" element={<SolutionCategory />} />
                 {/* Kept old route for backward compatibility if needed, or redirect */}
                 <Route path="/solutions" element={<Solutions />} />

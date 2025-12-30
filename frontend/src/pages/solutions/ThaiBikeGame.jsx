@@ -25,6 +25,7 @@ const GameHandTracker = ({ onHandMove, onVisible, onError, hidePreview = false }
     const handsRef = useRef(null);
     const [stream, setStream] = useState(null);
 
+
     // Use refs for callbacks to prevent re-triggering useEffect when props change
     const callbacksRef = useRef({ onHandMove, onVisible, onError });
     // Preview video ref
@@ -245,6 +246,7 @@ const GameEngine = ({ lane, isPlaying, onGameOver, onUpdateScore, onPassObstacle
     const obstaclesRef = useRef([]);
     const bikePosRef = useRef(0.5);
     const speedRef = useRef(GAME_SPEED_BASE);
+    const spawnCooldownRef = useRef(0);
     const scoreRef = useRef(0);
     const isPlayingRef = useRef(isPlaying);
 
@@ -298,16 +300,28 @@ const GameEngine = ({ lane, isPlaying, onGameOver, onUpdateScore, onPassObstacle
                 speedRef.current += 0.0001;
             }
 
-            // Tạo vật cản mới (Enforce spacing)
-            const lastObs = obstaclesRef.current[obstaclesRef.current.length - 1];
-            // Chỉ spawn nếu không có vật cản nào hoặc vật cản cuối cùng đã đi được một đoạn (y > 400)
-            if ((!lastObs || lastObs.y > 400) && Math.random() < 0.0025) {
-                obstaclesRef.current.push({
-                    id: Date.now() + Math.random(),
-                    lane: Math.random() > 0.5 ? 1 : 0,
-                    y: -100,
-                    type: Math.random() > 0.7 ? 'rock' : 'pothole',
-                });
+            // --- Spawn obstacle with controlled spacing ---
+            if (spawnCooldownRef.current > 0) {
+                spawnCooldownRef.current -= speedRef.current;
+            } else {
+                // Độ khó tăng dần theo score (0 → 1)
+                const difficulty = Math.min(scoreRef.current / 800, 1);
+
+                // Xác suất spawn (tăng nhẹ theo độ khó)
+                const spawnChance = 0.012 + difficulty * 0.01; // ~1.2% → ~2.2%
+
+                if (Math.random() < spawnChance) {
+                    obstaclesRef.current.push({
+                        id: Date.now() + Math.random(),
+                        lane: Math.random() > 0.5 ? 1 : 0,
+                        y: -120,
+                        // 70% ổ gà – 30% ổ vịt (đá)
+                        type: Math.random() < 0.7 ? 'pothole' : 'rock',
+                    });
+
+                    // Cooldown tạo nhịp thở (tốc độ cao → ít nghỉ hơn)
+                    spawnCooldownRef.current = 260 - speedRef.current * 10;
+                }
             }
 
             // Vị trí player (bike) trong không gian canvas
