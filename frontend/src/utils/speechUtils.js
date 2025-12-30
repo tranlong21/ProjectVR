@@ -13,6 +13,8 @@ export const speakDescription = (text, lang, onFinish) => {
         if (onFinish) onFinish();   // 🔥 báo cho UI biết đọc xong
     };
 
+    // Mobile browsers require user interaction.
+    // Ensure this function is called from a click event handler.
     window.speechSynthesis.speak(currentUtter);
 };
 

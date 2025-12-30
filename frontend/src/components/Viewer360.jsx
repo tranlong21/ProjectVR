@@ -425,11 +425,19 @@ const Viewer360 = ({
   };
 
   const handleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      wrapperRef.current?.requestFullscreen?.().catch(e => console.error(e));
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      if (wrapperRef.current?.requestFullscreen) {
+        wrapperRef.current.requestFullscreen().catch(e => console.error(e));
+      } else if (wrapperRef.current?.webkitRequestFullscreen) {
+        wrapperRef.current.webkitRequestFullscreen(); // Safari/iOS
+      }
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen?.();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      }
       setIsFullscreen(false);
     }
   };
@@ -440,7 +448,7 @@ const Viewer360 = ({
   }, [currentSceneId, scenes]);
 
   return (
-    <div ref={wrapperRef} className="relative w-full h-full bg-gray-900 group select-none overflow-hidden">
+    <div ref={wrapperRef} className="relative w-full h-full bg-gray-900 group select-none overflow-hidden touch-none">
       <style>{`
         .pnlm-controls-container, .pnlm-fullscreen-toggle { display: none !important; }
 

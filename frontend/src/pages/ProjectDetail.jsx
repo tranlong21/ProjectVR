@@ -8,7 +8,6 @@ import Viewer3D from '../components/Viewer3D';
 import { useTranslation } from 'react-i18next';
 import { Info, MapPin, Layers, Image as ImageIcon } from 'lucide-react';
 import { getThumbnailUrl, getPanoramaUrl } from '../utils/fileUtils';
-import { Volume2, VolumeX } from "lucide-react";
 
 
 const ProjectDetail = () => {
@@ -33,14 +32,11 @@ const ProjectDetail = () => {
 
     useEffect(() => {
         const fetchData = async () => {
-            console.group("📦 ProjectDetail FETCH DATA");
             setLoading(true);
 
             try {
                 // 1️⃣ PROJECT
-                console.log("➡️ Fetch project:", id);
                 const proj = await projectsService.getById(id);
-                console.log("✅ Project:", proj);
                 setProject(proj);
 
                 // 2️⃣ TAB DEFAULT
@@ -51,9 +47,7 @@ const ProjectDetail = () => {
 
                 // 3️⃣ 360 SCENES
                 if (proj.has360) {
-                    console.log("➡️ Fetch 360 scenes");
                     const scenesData = await scenesService.getByProjectId(id);
-                    console.log("✅ Scenes:", scenesData);
                     setScenes(scenesData || []);
 
                     if (scenesData?.length > 0) {
@@ -63,12 +57,9 @@ const ProjectDetail = () => {
 
                 // 4️⃣ 3D MODEL (PUBLIC)
                 if (proj.has3d) {
-                    console.log("➡️ Fetch PUBLIC 3D models");
                     const modelsData = await models3dService.getByProjectIdPublic(id);
-                    console.log("📦 Raw models:", modelsData);
 
                     if (!Array.isArray(modelsData) || modelsData.length === 0) {
-                        console.warn("⚠️ No public models returned");
                         setModel3d(null);
                     } else {
                         const readyModel = modelsData.find(
@@ -76,24 +67,20 @@ const ProjectDetail = () => {
                         );
 
                         if (!readyModel) {
-                            console.warn("⚠️ No READY_FOR_WEB model");
                             setModel3d(null);
                         } else {
-                            console.log("✅ READY_FOR_WEB model:", readyModel);
                             setModel3d(readyModel);
                         }
                     }
                 } else {
-                    console.log("ℹ️ Project has no 3D");
                     setModel3d(null);
                 }
 
             } catch (err) {
-                console.error("❌ Fetch project detail failed:", err);
+                console.error("Fetch project detail failed:", err);
                 setModel3d(null);
             } finally {
                 setLoading(false);
-                console.groupEnd();
             }
         };
 
@@ -276,9 +263,9 @@ const ProjectDetail = () => {
                                         <Viewer3D
                                             modelUrl={
                                                 model3d?.modelUrl
-                                                    ? import.meta.env.VITE_API_URL + model3d.modelUrl
+                                                    ? getModelUrl(model3d.modelUrl)
                                                     : model3d?.fileUrl
-                                                        ? import.meta.env.VITE_API_URL + model3d.fileUrl
+                                                        ? getModelUrl(model3d.fileUrl)
                                                         : null
                                             }
                                             description={modelDescription}

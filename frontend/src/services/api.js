@@ -19,11 +19,13 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.log("API ERROR:", {
-      status: error.response?.status,
-      url: error.config?.url,
-      data: error.response?.data,
-    });
+    if (import.meta.env.DEV) {
+      console.log("API ERROR:", {
+        status: error.response?.status,
+        url: error.config?.url,
+        data: error.response?.data,
+      });
+    }
     return Promise.reject(error);
   }
 );

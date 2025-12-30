@@ -2,6 +2,7 @@ package com.vrplus.backend.controller;
 
 import com.vrplus.backend.model.BlogPost;
 import com.vrplus.backend.repository.BlogRepository;
+import com.vrplus.backend.service.BlogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,14 +18,17 @@ public class BlogController {
     @Autowired
     BlogRepository blogRepository;
 
+    @Autowired
+    BlogService blogService;
+
     @GetMapping
     public List<BlogPost> getAllPosts() {
-        return blogRepository.findAll();
+        return blogService.getAllPosts();
     }
 
     @GetMapping("/{slug}")
     public ResponseEntity<?> getPostBySlug(@PathVariable String slug) {
-        return blogRepository.findBySlug(slug)
+        return blogService.getPostBySlug(slug)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
@@ -32,37 +36,19 @@ public class BlogController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createPost(@RequestBody BlogPost blogPost) {
-        if (blogRepository.existsBySlug(blogPost.getSlug())) {
-            return ResponseEntity.badRequest().body("Error: Slug is already taken!");
-        }
-        BlogPost savedPost = blogRepository.save(blogPost);
-        return ResponseEntity.ok(savedPost);
+        return ResponseEntity.ok(blogService.createPost(blogPost));
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updatePost(@PathVariable Long id, @RequestBody BlogPost blogPostDetails) {
-        return blogRepository.findById(id)
-                .map(post -> {
-                    post.setTitleVi(blogPostDetails.getTitleVi());
-                    post.setTitleEn(blogPostDetails.getTitleEn());
-                    post.setSlug(blogPostDetails.getSlug());
-                    post.setThumbnailUrl(blogPostDetails.getThumbnailUrl());
-                    post.setContentVi(blogPostDetails.getContentVi());
-                    post.setContentEn(blogPostDetails.getContentEn());
-                    return ResponseEntity.ok(blogRepository.save(post));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        return ResponseEntity.ok(blogService.updatePost(id, blogPostDetails));
     }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deletePost(@PathVariable Long id) {
-        return blogRepository.findById(id)
-                .map(post -> {
-                    blogRepository.delete(post);
-                    return ResponseEntity.ok().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        blogService.deletePost(id);
+        return ResponseEntity.ok().build();
     }
 }

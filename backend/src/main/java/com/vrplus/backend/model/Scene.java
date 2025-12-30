@@ -3,7 +3,10 @@ package com.vrplus.backend.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -12,7 +15,6 @@ import lombok.*;
 @Entity
 @Table(name = "scenes")
 public class Scene {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -30,6 +32,12 @@ public class Scene {
 
     private Double initialPitch;
     private Double initialYaw;
+
+    // Deprecated fields kept for backward compatibility if needed, or removed if
+    // strictly following new schema
+    // private Double pitch;
+    // private Double yaw;
+    // private Double hfov;
 
     @OneToMany(mappedBy = "scene", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties({"scene"})

@@ -24,12 +24,11 @@ public class WebSecurityConfig {
     UserDetailsServiceImpl userDetailsService;
 
     @Autowired
+    private AuthTokenFilter authTokenFilter;
+
+    @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
-    @Bean
-    public AuthTokenFilter authenticationJwtTokenFilter() {
-        return new AuthTokenFilter();
-    }
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
@@ -65,31 +64,47 @@ public class WebSecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/scenes/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/models/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/models3d/**").permitAll()
+
+                        // FILES API (FIX 401 Ở ĐÂY)
+                        // FILE UPLOAD / LOAD (FIX 401)
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/files/**").permitAll()
-                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**", "/api/blog*/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/files/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/api/files/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/api/files/**").permitAll()
+
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/files/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.POST, "/files/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.DELETE, "/files/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/files/**").permitAll()
+
+                        // Other public endpoints
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/assets/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+
                         // Admin endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+
                         // All other requests require authentication
-                        .anyRequest().authenticated());
+                        .anyRequest().authenticated()
+                );
 
         http.authenticationProvider(authenticationProvider());
-
-        http.addFilterBefore(authenticationJwtTokenFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
         org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
         configuration.setAllowedOrigins(java.util.Arrays.asList("*"));
         configuration.setAllowedMethods(java.util.Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.Arrays.asList("authorization", "content-type", "x-auth-token"));
-        configuration.setExposedHeaders(java.util.Arrays.asList("x-auth-token"));
+        configuration.setAllowedHeaders(java.util.Arrays.asList("*"));
+        configuration.setExposedHeaders(java.util.Arrays.asList("*"));
         org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

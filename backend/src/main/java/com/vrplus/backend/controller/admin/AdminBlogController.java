@@ -2,12 +2,16 @@ package com.vrplus.backend.controller.admin;
 
 import com.vrplus.backend.model.BlogPost;
 import com.vrplus.backend.repository.BlogRepository;
+import com.vrplus.backend.service.FileStorageService;
+import com.vrplus.backend.service.IBlogService;
+import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 
@@ -17,33 +21,37 @@ import java.util.List;
 public class AdminBlogController {
 
     @Autowired
-    BlogRepository blogRepository;
+    private IBlogService blogService;
+    @Autowired
+    private FileStorageService fileStorageService;
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public List<BlogPost> getAll() {
-        return blogRepository.findAll();
+        return blogService.getAllPosts();
     }
+
 
     @GetMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getById(@PathVariable Long id) {
-        return blogRepository.findById(id)
+        return blogService.getPostById(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createBlog(@RequestBody BlogPost blogPost) {
-
-        if (blogRepository.existsBySlug(blogPost.getSlug())) {
-            return ResponseEntity.badRequest().body("Error: Slug already exists!");
+        try {
+            BlogPost saved = blogService.createPost(blogPost);
+            return ResponseEntity.ok(saved);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error creating blog post: " + e.getMessage());
         }
-
-        BlogPost saved = blogRepository.save(blogPost);
-        return ResponseEntity.ok(saved);
     }
+
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
@@ -51,28 +59,26 @@ public class AdminBlogController {
             @PathVariable Long id,
             @RequestBody BlogPost blogPostDetails
     ) {
-        return blogRepository.findById(id)
-                .map(post -> {
-                    post.setTitleVi(blogPostDetails.getTitleVi());
-                    post.setTitleEn(blogPostDetails.getTitleEn());
-                    post.setSlug(blogPostDetails.getSlug());
-                    post.setContentVi(blogPostDetails.getContentVi());
-                    post.setContentEn(blogPostDetails.getContentEn());
-                    post.setThumbnailUrl(blogPostDetails.getThumbnailUrl());
-                    return ResponseEntity.ok(blogRepository.save(post));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        BlogPost updateBlogPost = null;
+        try {
+            updateBlogPost = blogService.updatePost(id, blogPostDetails);
+            return ResponseEntity.ok(updateBlogPost);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error updating blog post: " + e.getMessage());
+        }
+
     }
+
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> deleteBlog(@PathVariable Long id) {
-        return blogRepository.findById(id)
-                .map(post -> {
-                    blogRepository.delete(post);
-                    return ResponseEntity.ok().build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try{
+            blogService.deletePost(id);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error deleting blog post: " + e.getMessage());
+        }
     }
 
 
@@ -81,35 +87,13 @@ public class AdminBlogController {
     public ResponseEntity<?> uploadThumbnail(
             @PathVariable Long id,
             @RequestParam("file") MultipartFile file
-    ) {
-
-        return blogRepository.findById(id).map(post -> {
-
-            try {
-                String uploadDir = "uploads/blog/";
-                Path uploadPath = Paths.get(uploadDir);
-
-                if (!Files.exists(uploadPath)) {
-                    Files.createDirectories(uploadPath);
-                }
-
-                String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-                Path filePath = uploadPath.resolve(fileName);
-
-                // SAVE FILE
-                Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
-
-                // SET URL TO BLOGPOST
-                String url = "/uploads/blog/" + fileName;
-                post.setThumbnailUrl(url);
-                blogRepository.save(post);
-
-                return ResponseEntity.ok(url);
-
-            } catch (Exception e) {
-                return ResponseEntity.badRequest().body("Error uploading file");
-            }
-
-        }).orElse(ResponseEntity.notFound().build());
+    ) throws IOException {
+        try {
+            String fileUrl = fileStorageService.storeFile(file, "blog");
+            blogService.updateThumbnail(id, fileUrl);
+            return ResponseEntity.ok(fileUrl);
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body("Error uploading thumbnail: " + e.getMessage());
+        }
     }
 }
