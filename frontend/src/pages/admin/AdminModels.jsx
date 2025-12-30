@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 
 import Viewer3D from "../../components/Viewer3D";
 import * as hotspotService from "../../services/hotspots.service";
+import Loader from "../../components/common/Loader";
 
 const AdminModels = () => {
     const [projects, setProjects] = useState([]);
@@ -26,6 +27,7 @@ const AdminModels = () => {
     });
     const [modelFile, setModelFile] = useState(null);
     const [uploadType, setUploadType] = useState("file"); // file | url
+    const [isUploading, setIsUploading] = useState(false);
 
     // Hotspots
     const [hotspots, setHotspots] = useState([]);
@@ -101,6 +103,8 @@ const AdminModels = () => {
             return;
         }
 
+        setIsUploading(true);
+
         try {
             const formData = new FormData();
 
@@ -118,6 +122,7 @@ const AdminModels = () => {
                 formData.append("modelUrl", uploadFormData.modelUrl);
             } else {
                 alert("Please select a file or enter a URL");
+                setIsUploading(false);
                 return;
             }
 
@@ -137,6 +142,8 @@ const AdminModels = () => {
         } catch (error) {
             console.error("Error uploading model:", error);
             alert("Failed to upload model: " + (error.response?.data || error.message));
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -617,15 +624,18 @@ const AdminModels = () => {
                                 <button
                                     type="button"
                                     onClick={() => setIsUploadModalOpen(false)}
-                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                    disabled={isUploading}
+                                    className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600 disabled:opacity-50"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                                    disabled={isUploading}
+                                    className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                                 >
-                                    {models.length > 0 ? "Replace" : "Upload"}
+                                    {isUploading && <Loader size="sm" />}
+                                    {isUploading ? "Uploading..." : (models.length > 0 ? "Replace" : "Upload")}
                                 </button>
                             </div>
                         </form>

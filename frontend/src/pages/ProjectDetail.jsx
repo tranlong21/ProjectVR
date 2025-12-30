@@ -8,6 +8,7 @@ import Viewer3D from '../components/Viewer3D';
 import { useTranslation } from 'react-i18next';
 import { Info, MapPin, Layers, Image as ImageIcon } from 'lucide-react';
 import { getThumbnailUrl, getPanoramaUrl } from '../utils/fileUtils';
+import Skeleton from '../components/common/Skeleton';
 
 
 const ProjectDetail = () => {
@@ -89,7 +90,53 @@ const ProjectDetail = () => {
 
     const getImageUrl = (url) => getThumbnailUrl(url);
 
-    if (loading) return <div className="text-center mt-20 text-[var(--text-primary)]">{t('common.loading')}</div>;
+
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-[var(--bg-primary)] pt-20 px-4 transition-colors duration-300">
+                {/* Banner Skeleton */}
+                <div className="relative h-[40vh] md:h-[50vh] rounded-2xl overflow-hidden mb-8 shadow-2xl bg-gray-800 animate-pulse">
+                    <div className="absolute bottom-8 left-8 space-y-4">
+                        <div className="w-24 h-6 bg-gray-700 rounded-full" />
+                        <div className="w-64 h-12 bg-gray-700 rounded" />
+                        <div className="w-32 h-6 bg-gray-700 rounded" />
+                    </div>
+                </div>
+
+                <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12 mb-20">
+                    <div className="lg:col-span-2 space-y-8">
+                        {/* Tabs Skeleton */}
+                        <div className="flex space-x-4 border-b border-[var(--border-color)] pb-4">
+                            <div className="w-24 h-10 bg-gray-800 rounded-full animate-pulse px-6 py-2" />
+                            <div className="w-24 h-10 bg-gray-800 rounded-full animate-pulse px-6 py-2" />
+                            <div className="w-24 h-10 bg-gray-800 rounded-full animate-pulse px-6 py-2" />
+                        </div>
+                        {/* Content Skeleton */}
+                        <div className="space-y-4">
+                            <Skeleton variant="text" className="h-4 w-full" />
+                            <Skeleton variant="text" className="h-4 w-5/6" />
+                            <Skeleton variant="text" className="h-4 w-4/5" />
+                            <Skeleton variant="rectangular" className="h-64 w-full rounded-xl mt-8" />
+                        </div>
+                    </div>
+
+                    {/* Sidebar Skeleton */}
+                    <div className="space-y-8">
+                        <div className="glass-panel p-6 rounded-xl space-y-6">
+                            <Skeleton variant="text" className="h-8 w-1/2 mb-4" />
+                            <div className="space-y-4">
+                                <div className="flex justify-between"><Skeleton variant="text" className="w-16" /><Skeleton variant="text" className="w-24" /></div>
+                                <div className="flex justify-between"><Skeleton variant="text" className="w-16" /><Skeleton variant="text" className="w-24" /></div>
+                                <div className="flex justify-between"><Skeleton variant="text" className="w-16" /><Skeleton variant="text" className="w-24" /></div>
+                            </div>
+                            <Skeleton variant="rectangular" className="h-12 w-full rounded-lg" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
     if (!project) return <div className="text-center mt-20 text-[var(--text-primary)]">Project not found</div>;
 
     const title = i18n.language === 'vi' ? (project.titleVi || project.title) : (project.titleEn || project.title);

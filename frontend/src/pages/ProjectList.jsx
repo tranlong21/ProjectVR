@@ -5,6 +5,7 @@ import * as projectsService from '../services/projects.service';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, MapPin, Eye } from 'lucide-react';
 import { getThumbnailUrl } from '../utils/fileUtils';
+import Skeleton from '../components/common/Skeleton';
 
 const ProjectList = () => {
     const { t, i18n } = useTranslation();
@@ -39,7 +40,10 @@ const ProjectList = () => {
         ? projects
         : projects.filter(p => p.category?.id === activeCategory);
 
-    if (loading) return <div className="min-h-screen flex items-center justify-center text-[#9b4dff] font-bold">Loading...</div>;
+    // if (loading) return <div className="min-h-screen flex items-center justify-center text-[#9b4dff] font-bold">Loading...</div>; // OLD
+    if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
+
+    const isLoadingInitial = loading && projects.length === 0;
     if (error) return <div className="min-h-screen flex items-center justify-center text-red-500">{error}</div>;
 
     return (
@@ -95,7 +99,29 @@ const ProjectList = () => {
             {/* (C) Project Grid */}
             <div className="max-w-7xl mx-auto px-6 py-16">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                    {filteredProjects.map((project) => (
+                    {isLoadingInitial && Array(6).fill(0).map((_, i) => (
+                        <div key={i} className="bg-[var(--card)] rounded-2xl overflow-hidden border border-[var(--border-color)] h-full flex flex-col">
+                            {/* Thumbnail Skeleton */}
+                            <div className="h-64 w-full bg-gray-800 animate-pulse relative">
+                                <div className="absolute top-4 left-4 w-20 h-6 bg-gray-700 rounded-full" />
+                            </div>
+                            {/* Content Skeleton */}
+                            <div className="p-6 flex flex-col flex-grow space-y-4">
+                                <Skeleton variant="text" className="h-8 w-3/4" />
+                                <div className="space-y-2">
+                                    <Skeleton variant="text" />
+                                    <Skeleton variant="text" />
+                                    <Skeleton variant="text" className="w-2/3" />
+                                </div>
+                                <div className="mt-auto pt-4 flex justify-between items-center">
+                                    <Skeleton variant="text" className="w-24" />
+                                    <Skeleton variant="text" className="w-20 rounded-lg h-8" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+
+                    {!isLoadingInitial && filteredProjects.map((project) => (
                         <Link key={project.id} to={`/projects/${project.id}`} className="group block h-full">
                             <div className="bg-[var(--card)] rounded-2xl overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-purple-500/10 transition-all duration-300 border border-[var(--border-color)] hover:border-[var(--primary)] h-full flex flex-col group-hover:-translate-y-2">
                                 {/* Thumbnail */}

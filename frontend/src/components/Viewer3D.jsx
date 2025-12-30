@@ -1,6 +1,7 @@
 import React, { Suspense, useRef, useEffect, useState } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls, useGLTF, Stage } from "@react-three/drei";
+import { OrbitControls, useGLTF, Stage, Html } from "@react-three/drei";
+import Loader from "./common/Loader";
 import * as THREE from "three";
 
 import HotspotBillboard from "./HotspotBillboard";
@@ -306,7 +307,16 @@ const Viewer3D = ({
                     powerPreference: "high-performance",
                 }}
             >
-                <Suspense fallback={null}>
+                <Suspense fallback={
+                    <Html center>
+                        <div className="flex flex-col items-center">
+                            <Loader size="lg" />
+                            <p className="text-white mt-2 font-bold bg-black/50 px-3 py-1 rounded backdrop-blur-sm">
+                                Loading 3D Model...
+                            </p>
+                        </div>
+                    </Html>
+                }>
                     <CameraResetter controlsRef={controlsRef} depsKey={modelUrl} />
 
                     <ambientLight intensity={0.8} />
