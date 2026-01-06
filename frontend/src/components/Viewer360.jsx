@@ -1,5 +1,6 @@
 /* --- FILE: src/components/Viewer360.js --- */
 import React, { useEffect, useRef, useState, useCallback } from 'react';
+import * as THREE from 'three';
 import 'pannellum/build/pannellum.css';
 import 'pannellum';
 import { getPanoramaUrl } from '../utils/fileUtils';
@@ -38,10 +39,8 @@ const Viewer360 = ({
     startPitch: 0,
   });
 
-  const latestHandPosRef = useRef({
-    x: null,
-    y: null,
-  });
+  /* logic specific refs */
+  const lastFramePosRef = useRef({ x: 0, y: 0 });
 
   const [vrEnabled, setVrEnabled] = useState(false);
   const [gestureState, setGestureState] = useState(null);
@@ -266,75 +265,85 @@ const Viewer360 = ({
 
       // Ensure viewer and tracking are ready
       if (!viewer || !g || !g.isTracking || !viewerReady) {
-        if (rotateDragRef.current.active) {
-          noteRotateReset();
-        }
+        lastFramePosRef.current = { x: g?.x || 0, y: g?.y || 0 };
         rafId = requestAnimationFrame(tick);
         return;
       }
 
-      // STRICT ROTATION: ONLY OPEN_PALM
-      if (g.type !== GestureType.OPEN_PALM) {
-        if (rotateDragRef.current.active) {
-          noteRotateReset();
-        }
-      }
+      // Calculate localized delta (mimic gestureState.deltaX)
+      const deltaX = g.x - lastFramePosRef.current.x;
+      const deltaY = g.y - lastFramePosRef.current.y;
+      lastFramePosRef.current = { x: g.x, y: g.y };
 
-      // ZOOM HANDLER (PINCH or TWO_HANDS)
-      // We rely on g.zoomFactor which is now smooth and stateful from Analyzer
+      // Map User Snippet GESTURES to Existing Enums:
+      // FIVE_FINGERS (Snippet) -> PINCH (Current impl, or OPEN_PALM?)
+      // Wait, User Snippet: FIVE_FINGERS || TWO_HANDS = ZOOM.
+      // Existing: PINCH || TWO_HANDS = ZOOM.
+      // We will use existing PINCH / TWO_HANDS for Zoom.
+
+      /* ================== ZOOM IN / OUT ================== */
       if (
         g.type === GestureType.PINCH ||
         g.type === GestureType.TWO_HANDS
       ) {
-        // Base FOV logic
-        const BASE_HFOV = 100;
-        const MIN_HFOV = 20;
-        const MAX_HFOV = 150;
+        const baseFov = 75; // As per snippet
 
-        // Map zoomFactor to HFOV
-        // Factor 1 = 100, Factor 0.5 = 50, Factor 2 = 150 (Clamped)
-        /* 
-           NOTE: In Analyzer, PINCH decreases factor (Zoom In), TWO_HANDS increases (Zoom Out).
-           Result: Factor < 1 => Zoomed In. Factor > 1 => Zoomed Out.
-           FOV = BASE * factor.
-         */
-        let targetHfov = BASE_HFOV * g.zoomFactor;
-        targetHfov = Math.max(MIN_HFOV, Math.min(MAX_HFOV, targetHfov));
+        // Snippet: targetFov = baseFov * (1 / gestureState.zoomFactor);
+        const targetFov = baseFov * (1 / g.zoomFactor);
+        const clampedFov = Math.max(30, Math.min(100, targetFov));
 
-        const currentHfov = viewer.getHfov();
-        // Additional local smoothing if needed, but analyzer output is already smooth-ish.
-        // Adding a bit of local lerp for extra butter.
-        const LERP = 0.2;
-        const nextHfov = currentHfov + (targetHfov - currentHfov) * LERP;
+        // Use Pannellum setHfov (equivalent to camera.fov)
+        const currentFov = viewer.getHfov();
+        const nextFov = THREE.MathUtils.lerp(
+          currentFov,
+          clampedFov,
+          0.1
+        );
 
-        viewer.setHfov(nextHfov);
+        viewer.setHfov(nextFov);
+        // camera.updateProjectionMatrix(); // Implicit in viewer
       }
 
-      // ROTATION HANDLER (OPEN_PALM)
+      /* ================== XOAY CAMERA ================== */
+      // User Snippet: OK_GESTURE. 
+      // Existing: OPEN_PALM used for rotation.
       if (g.type === GestureType.OPEN_PALM) {
-        // Init drag anchor if not active
-        if (!rotateDragRef.current.active) {
-          rotateDragRef.current = {
-            active: true,
-            startX: g.x,
-            startY: g.y,
-            startYaw: viewer.getYaw(),
-            startPitch: viewer.getPitch(),
-          };
-        } else {
-          // Calculate delta from anchor
-          const dx = g.x - rotateDragRef.current.startX;
-          const dy = g.y - rotateDragRef.current.startY;
+        const rotationSpeed = 2.5; // As per snippet
 
-          const SENSITIVITY_YAW = 420; // Increased for better responsiveness
-          const SENSITIVITY_PITCH = 420;
+        // Pannellum uses Yaw/Pitch. 
+        // We map to Spherical to follow logic Y HỆT.
+        // Pannellum Yaw = Theta (approx). Pitch = 90 - Phi_deg.
 
-          const nextYaw = rotateDragRef.current.startYaw + dx * SENSITIVITY_YAW;
-          const nextPitch = rotateDragRef.current.startPitch - dy * SENSITIVITY_PITCH;
+        const currentYaw = viewer.getYaw();
+        const currentPitch = viewer.getPitch();
 
-          viewer.setYaw(nextYaw);
-          viewer.setPitch(Math.max(-85, Math.min(85, nextPitch)));
-        }
+        // Convert to Spherical (Radius=10)
+        // phi: 0..PI (Top..Bottom). Pitch: 90..-90 (Top..Bottom).
+        const phi = THREE.MathUtils.degToRad(90 - currentPitch);
+        const theta = THREE.MathUtils.degToRad(currentYaw);
+
+        const spherical = new THREE.Spherical(10, phi, theta);
+
+    
+        spherical.theta -= deltaX * rotationSpeed * 10; 
+        spherical.theta -= deltaX * rotationSpeed * 5; // Tuning for Pannellum scale
+        spherical.phi -= deltaY * rotationSpeed * 5;
+
+        spherical.phi = Math.max(
+          0.1,
+          Math.min(Math.PI - 0.1, spherical.phi)
+        );
+
+        // Convert back to Yaw/Pitch
+        // Pitch = 90 - deg(phi)
+        const newPitch = 90 - THREE.MathUtils.radToDeg(spherical.phi);
+        const newYaw = THREE.MathUtils.radToDeg(spherical.theta);
+
+        // camera.position.setFromSpherical(spherical);
+        // camera.lookAt(0, 0, 0);
+        // In Pannellum, we just set the angles.
+        viewer.setYaw(newYaw);
+        viewer.setPitch(newPitch);
       }
 
       rafId = requestAnimationFrame(tick);
@@ -429,7 +438,7 @@ const Viewer360 = ({
       if (wrapperRef.current?.requestFullscreen) {
         wrapperRef.current.requestFullscreen().catch(e => console.error(e));
       } else if (wrapperRef.current?.webkitRequestFullscreen) {
-        wrapperRef.current.webkitRequestFullscreen(); // Safari/iOS
+        wrapperRef.current.webkitRequestFullscreen(); 
       }
       setIsFullscreen(true);
     } else {
