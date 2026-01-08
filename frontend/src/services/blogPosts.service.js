@@ -46,3 +46,36 @@ export const uploadThumbnail = async (id, file) => {
 
     return response.data;
 };
+
+/* ================= AI BLOG (OLLAMA) ================= */
+
+/**
+ * Generate blog content by AI (Ollama – qwen2.5)
+ * @param {Object} payload
+ * @param {string} payload.title
+ * @param {string} payload.topic
+ * @param {number} payload.minWords
+ * @param {number} payload.maxWords
+ */
+export const generateByAI = async ({
+  title,
+  topic,
+  minWords = 600,
+  maxWords = 800,
+  audience,
+  returnHtml = true
+}) => {
+  const response = await api.post(
+    `${ADMIN_ENDPOINT}/generate`,   
+    {
+      title,
+      topic,
+      minWords,
+      maxWords,
+      audience,
+      returnHtml
+    }
+  );
+
+  return response.data;
+};
