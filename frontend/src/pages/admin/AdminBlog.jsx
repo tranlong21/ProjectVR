@@ -1,28 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import * as blogPostsService from '../../services/blogPosts.service';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
-import Modal from '../../components/admin/Modal';
-import { getThumbnailUrl } from '../../utils/fileUtils';
-
+import * as blogService from '../../services/blogPosts.service';
+import { Upload, Save, Eye, ArrowLeft, Layers, Globe, Calendar, Image as ImageIcon, X } from 'lucide-react';
+import RichTextEditor from '../../components/admin/RichTextEditor';
+import ImageSelector from '../../components/admin/ImageSelector';
+import { useNavigate } from 'react-router-dom';
 
 const AdminBlog = () => {
+    const navigate = useNavigate();
     const [posts, setPosts] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [showModal, setShowModal] = useState(false);
-    const [editingPost, setEditingPost] = useState(null);
-    const [thumbnailFile, setThumbnailFile] = useState(null);
-    const [previewUrl, setPreviewUrl] = useState(null);
+    const [mode, setMode] = useState('LIST'); // LIST | EDIT | CREATE
+    const [loading, setLoading] = useState(false);
 
+    // State for thumbnail selector
+    const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
 
-    // Form states
+    const handleThumbnailSelect = (image) => {
+        setFormData(prev => ({ ...prev, thumbnailUrl: image.url }));
+        setShowThumbnailSelector(false); // Close after selection
+    };
+
+    // Editor State
     const [formData, setFormData] = useState({
+        id: null,
         titleVi: '',
         titleEn: '',
         slug: '',
+        thumbnailUrl: '',
         contentVi: '',
-        contentEn: '',
-        thumbnailUrl: '/assets/images/vr_hero_banner.png'
+        contentEn: ''
     });
 
     useEffect(() => {
@@ -30,202 +35,147 @@ const AdminBlog = () => {
     }, []);
 
     const fetchPosts = async () => {
+        setLoading(true);
         try {
-            const data = await blogPostsService.getAll();
+            const data = await blogService.getAll();
             setPosts(data);
         } catch (error) {
-            console.error('Error fetching blog posts:', error);
+            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
-    const handleOpenModal = (post = null) => {
-        if (post) {
-            setEditingPost(post);
-            setFormData({
-                titleVi: post.titleVi || '',
-                titleEn: post.titleEn || '',
-                slug: post.slug || '',
-                contentVi: post.contentVi || '',
-                contentEn: post.contentEn || '',
-                thumbnailUrl: post.thumbnailUrl || '/assets/images/vr_hero_banner.png'
-            });
-            setPreviewUrl(getThumbnailUrl(post.thumbnailUrl));
-        } else {
-            setEditingPost(null);
-            setFormData({
-                titleVi: '',
-                titleEn: '',
-                slug: '',
-                contentVi: '',
-                contentEn: '',
-                thumbnailUrl: '/assets/images/vr_hero_banner.png'
-            });
-            setPreviewUrl(null);
-        }
-        setShowModal(true);
+    const handleCreate = () => {
+        setMode('CREATE');
+        setFormData({
+            id: null,
+            titleVi: '',
+            titleEn: '',
+            slug: '',
+            thumbnailUrl: '',
+            contentVi: '', // Default content?
+            contentEn: ''
+        });
     };
 
-    const handleCloseModal = () => {
-        setShowModal(false);
-        setEditingPost(null);
+    const handleEdit = (post) => {
+        setMode('EDIT');
+        setFormData({
+            ...post,
+            slug: post.slug || '' // Ensure not null
+        });
+    };
+
+    const handleBack = () => {
+        if (window.confirm("Unsaved changes will be lost. Go back?")) {
+            setMode('LIST');
+            fetchPosts();
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLoading(true);
-
         try {
-            let savedPost;
-
-            if (!editingPost) {
-                savedPost = await blogPostsService.create(formData);
+            if (mode === 'CREATE') {
+                await blogService.create(formData);
+                alert("Post created!");
             } else {
-                savedPost = await blogPostsService.update(editingPost.id, formData);
+                await blogService.update(formData.id, formData);
+                alert("Post updated!");
             }
-
-            let thumbnailUrl = savedPost.thumbnailUrl;
-
-            if (thumbnailFile) {
-                try {
-                    thumbnailUrl = await blogPostsService.uploadThumbnail(savedPost.id, thumbnailFile);
-                } catch (error) {
-                    console.warn("Thumbnail upload error:", error);
-                }
-            }
-
-            savedPost.thumbnailUrl = thumbnailUrl;
-
-            setPosts((prev) => {
-                if (editingPost) {
-                    return prev.map(p => p.id === savedPost.id ? savedPost : p);
-                }
-                return [savedPost, ...prev];
-            });
-
-            handleCloseModal();
-            alert(editingPost ? "Blog updated successfully!" : "Blog created successfully!");
-
+            setMode('LIST');
+            fetchPosts();
         } catch (error) {
-            console.error("Error saving blog post:", error);
-            alert("Failed to save blog post");
-        } finally {
-            setLoading(false);
+            alert("Error saving post");
+            console.error(error);
         }
     };
 
+    const handleThumbnailUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Draft save first to get ID if creating? 
+        // Or implement a generic upload returned URL logic. 
+        // Existing service logic: uploadThumbnail requires ID.
+        // We will adapt slightly OR assume user must create post first or we change API.
+        // However, prompt asks for WP experience. Usually can upload thumb before save?
+        // Let's use the new blogImages.service for uploading if we want, OR just use the existing logic.
+        // But invalid ID issue.
+        // Better: Upload generic, get URL, set string. 
+
+        // Wait, backend `uploadThumbnail` expects ID. 
+        // Let's rely on string URL input or separate upload if ID exists.
+        // For 'CREATE' mode, we can't use `uploadThumbnail` API yet.
+        // WORKAROUND: Use the generic ImageSelector upload for thumbnail too?
+        // Or just let them paste URL for now / pick from library.
+        alert("Please save the post first to upload a specific thumbnail, or paste a URL.");
+    };
+
+    // Auto-generate slug from Vietnamese title instead
+    useEffect(() => {
+        if (mode === 'CREATE' && formData.titleVi) {
+            const slug = formData.titleVi
+                .toLowerCase()
+                .normalize('NFD') // Decompose
+                .replace(/[\u0300-\u036f]/g, '') // Remove accents
+                .replace(/đ/g, 'd').replace(/Đ/g, 'D')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/(^-|-$)+/g, '');
+            setFormData(prev => ({ ...prev, slug }));
+        }
+    }, [formData.titleVi, mode]);
 
     const handleDelete = async (id) => {
-        if (window.confirm('Are you sure you want to delete this blog post?')) {
+        if (window.confirm("Are you sure you want to delete this blog post?")) {
             try {
-                await blogPostsService.remove(id);
-                fetchPosts();
-                alert('Blog post deleted successfully!');
+                await blogService.remove(id);
+                setPosts(posts.filter(p => p.id !== id));
             } catch (error) {
-                console.error('Error deleting post:', error);
-                alert('Failed to delete post');
+                console.error("Error deleting post:", error);
+                alert("Failed to delete post");
             }
         }
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
-
-    const handleThumbnailSelect = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setThumbnailFile(file);
-
-            const tempUrl = URL.createObjectURL(file);
-            setPreviewUrl(tempUrl);
-        }
-    };
-
-    const filteredPosts = posts.filter(p =>
-        p.titleVi?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.titleEn?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    if (loading && posts.length === 0) {
-        return <div className="text-center py-12 text-gray-600 dark:text-gray-400">Loading blog posts...</div>;
-    }
-
-    return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Blog Posts</h1>
-                    <p className="text-gray-600 dark:text-gray-400 mt-1">Manage blog content</p>
+    if (mode === 'LIST') {
+        return (
+            <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Blog Management</h1>
+                    <button
+                        onClick={handleCreate}
+                        className="px-4 py-2 bg-[#9b4dff] text-white rounded-lg hover:bg-[#8a3ee6] flex items-center gap-2"
+                    >
+                        <Layers size={20} /> New Post
+                    </button>
                 </div>
-                <button
-                    onClick={() => handleOpenModal()}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-                >
-                    <Plus size={20} />
-                    <span>New Post</span>
-                </button>
-            </div>
 
-            {/* Search */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4">
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-                    <input
-                        type="text"
-                        placeholder="Search posts..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                </div>
-            </div>
-
-            {/* Posts Table */}
-            <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-                <div className="overflow-x-auto">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
                     <table className="w-full">
                         <thead className="bg-gray-50 dark:bg-slate-700">
-                            <tr className="text-left text-sm font-semibold text-gray-600 dark:text-gray-300">
-                                <th className="px-6 py-3">ID</th>
-                                <th className="px-6 py-3">Title (VI)</th>
-                                <th className="px-6 py-3">Title (EN)</th>
-                                <th className="px-6 py-3">Slug</th>
-                                <th className="px-6 py-3">Date</th>
-                                <th className="px-6 py-3">Actions</th>
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">ID</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Title (VI)</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Title (EN - Auto)</th>
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                            {filteredPosts.map((post) => (
-                                <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors">
-                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">{post.id}</td>
-                                    <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-gray-100">{post.titleVi}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{post.titleEn}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">/{post.slug}</td>
-                                    <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
-                                        {new Date(post.createdAt).toLocaleDateString()}
-                                    </td>
-                                    <td className="px-6 py-4 text-sm">
-                                        <div className="flex space-x-2">
-                                            <button
-                                                onClick={() => handleOpenModal(post)}
-                                                className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                            >
-                                                <Edit size={18} />
-                                            </button>
-                                            <button
-                                                onClick={() => handleDelete(post.id)}
-                                                className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                            >
-                                                <Trash2 size={18} />
-                                            </button>
-                                        </div>
+                        <tbody className="divide-y divide-gray-200 dark:divide-slate-600">
+                            {posts.map(post => (
+                                <tr key={post.id} className="hover:bg-gray-50 dark:hover:bg-slate-700">
+                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white">{post.id}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{post.titleVi}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 italic">{post.titleEn || '(Generating...)'}</td>
+                                    <td className="px-6 py-4 text-right text-sm">
+                                        <button onClick={() => handleEdit(post)} className="text-blue-600 hover:text-blue-900 mr-4">Edit</button>
+                                        <button
+                                            onClick={() => handleDelete(post.id)}
+                                            className="text-red-600 hover:text-red-900"
+                                        >
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -233,116 +183,144 @@ const AdminBlog = () => {
                     </table>
                 </div>
             </div>
+        );
+    }
 
-            {/* Create/Edit Modal */}
-            <Modal
-                isOpen={showModal}
-                onClose={handleCloseModal}
-                title={editingPost ? 'Edit Blog Post' : 'Create New Blog Post'}
-                size="lg"
-            >
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (VI)</label>
-                            <input
-                                type="text"
-                                name="titleVi"
-                                value={formData.titleVi}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (EN)</label>
-                            <input
-                                type="text"
-                                name="titleEn"
-                                value={formData.titleEn}
-                                onChange={handleInputChange}
-                                className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
-                        </div>
-                    </div>
 
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)]">
+            {/* Left Panel: Content */}
+            <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
+                <div className="flex items-center gap-4">
+                    <button type="button" onClick={handleBack} className="p-2 hover:bg-gray-200 rounded-full">
+                        <ArrowLeft size={24} />
+                    </button>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {mode === 'CREATE' ? 'Add New Post' : 'Edit Post'}
+                    </h1>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-slate-900/50 p-4 rounded text-sm text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900 mb-4">
+                    <p>ℹ️ <strong>Auto-Translation Active:</strong> You only need to write content in Vietnamese. English title and content will be automatically generated by the system upon saving.</p>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Slug</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title (Vietnamese) *</label>
                         <input
                             type="text"
-                            name="slug"
-                            value={formData.slug}
-                            onChange={handleInputChange}
-                            placeholder="url-friendly-slug"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                            value={formData.titleVi}
+                            onChange={(e) => setFormData({ ...formData, titleVi: e.target.value })}
+                            className="w-full text-xl font-bold p-2 border border-gray-300 dark:border-slate-600 rounded bg-transparent dark:text-white"
+                            placeholder="Nhập tiêu đề tiếng Việt"
                             required
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">URL: /blog/{formData.slug || 'your-slug'}</p>
                     </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content (VI)</label>
-                        <textarea
-                            name="contentVi"
-                            value={formData.contentVi}
-                            onChange={handleInputChange}
-                            rows={6}
-                            placeholder="Markdown supported"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content (EN)</label>
-                        <textarea
-                            name="contentEn"
-                            value={formData.contentEn}
-                            onChange={handleInputChange}
-                            rows={6}
-                            placeholder="Markdown supported"
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 font-mono text-sm"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Thumbnail</label>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleThumbnailSelect}
-                            className="dark:text-gray-200"
-                        />
-
-                        {(previewUrl || formData.thumbnailUrl) && (
-                            <img
-                                src={previewUrl || getThumbnailUrl(formData.thumbnailUrl)}
-                                alt="Preview"
-                                className="mt-3 w-40 rounded border"
-                                onError={(e) => { e.target.src = '/assets/images/vr_hero_banner.png'; }}
+                    {/* Read-only English Title Preview */}
+                    {formData.titleEn && (
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Title (English - Auto Generated)</label>
+                            <input
+                                type="text"
+                                value={formData.titleEn}
+                                readOnly
+                                disabled
+                                className="w-full p-2 text-sm border border-gray-200 dark:border-slate-700 rounded bg-gray-50 dark:bg-slate-900 text-gray-500 italic"
                             />
+                        </div>
+                    )}
+                </div>
+
+                {/* Editor Areas */}
+                <div className="space-y-8 pb-10">
+                    <div>
+                        <label className="block text-lg font-medium text-gray-700 dark:text-gray-300 mb-2">Content (Vietnamese)</label>
+                        <RichTextEditor
+                            value={formData.contentVi}
+                            onChange={(val) => setFormData(prev => ({ ...prev, contentVi: val }))}
+                        />
+                    </div>
+                </div>
+            </div>
+
+            {/* Right Panel: Settings */}
+            <div className="w-full lg:w-80 flex flex-col gap-4">
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <Globe size={18} /> Publish
+                    </h3>
+                    <div className="space-y-4">
+                        <button type="submit" className="w-full py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex justify-center items-center gap-2">
+                            <Save size={18} /> {mode === 'CREATE' ? 'Publish' : 'Update'}
+                        </button>
+                        {formData.id && (
+                            <a
+                                href={`/blog/${formData.slug}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="w-full py-2 border border-gray-300 dark:border-slate-600 text-center rounded block hover:bg-gray-50 dark:hover:bg-slate-700 dark:text-white"
+                            >
+                                Preview Changes
+                            </a>
                         )}
                     </div>
+                </div>
 
-                    <div className="flex justify-end space-x-3 pt-4">
-                        <button
-                            type="button"
-                            onClick={handleCloseModal}
-                            className="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 transition-colors"
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-4">Slug</h3>
+                    <input
+                        type="text"
+                        value={formData.slug}
+                        onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
+                        className="w-full p-2 text-sm border border-gray-300 dark:border-slate-600 rounded bg-gray-50 dark:bg-slate-900 dark:text-gray-300"
+                    />
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow">
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-4">Featured Image</h3>
+                    {formData.thumbnailUrl ? (
+                        <div className="relative group cursor-pointer" onClick={() => setShowThumbnailSelector(true)}>
+                            <img
+                                src={formData.thumbnailUrl.startsWith('http') ? formData.thumbnailUrl : `${import.meta.env.VITE_API_URL}${formData.thumbnailUrl}`}
+                                alt="Thumbnail"
+                                className="w-full h-auto rounded border border-gray-200 dark:border-slate-700 hover:opacity-90 transition-opacity"
+                            />
+                            <div className="absolute top-2 right-2">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setFormData({ ...formData, thumbnailUrl: '' }); }}
+                                    className="bg-red-500 text-white p-1 rounded-full shadow-lg hover:bg-red-600"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/30 transition-opacity rounded">
+                                <span className="text-white font-medium drop-shadow-md">Change Image</span>
+                            </div>
+                        </div>
+                    ) : (
+                        <div
+                            onClick={() => setShowThumbnailSelector(true)}
+                            className="border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg p-6 text-center cursor-pointer hover:border-[#9b4dff] hover:bg-gray-50 dark:hover:bg-slate-900 transition-colors"
                         >
-                            Cancel
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50"
-                        >
-                            {loading ? 'Saving...' : (editingPost ? 'Update Post' : 'Create Post')}
-                        </button>
-                    </div>
-                </form>
-            </Modal>
-        </div>
+                            <div className="flex justify-center mb-2">
+                                <ImageIcon size={32} className="text-gray-400" />
+                            </div>
+                            <span className="text-sm font-medium text-[#9b4dff]">Set featured image</span>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Thumbnail Selector Modal */}
+            <ImageSelector
+                isOpen={showThumbnailSelector}
+                onClose={() => setShowThumbnailSelector(false)}
+                onSelect={handleThumbnailSelect}
+                usageType="THUMBNAIL"
+            />
+        </form>
     );
 };
 

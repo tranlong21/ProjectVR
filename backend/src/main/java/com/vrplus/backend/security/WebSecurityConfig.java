@@ -29,7 +29,6 @@ public class WebSecurityConfig {
     @Autowired
     private AuthEntryPointJwt unauthorizedHandler;
 
-
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
@@ -81,6 +80,7 @@ public class WebSecurityConfig {
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/blog/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers("/assets/**").permitAll()
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 
@@ -88,15 +88,13 @@ public class WebSecurityConfig {
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
                         // All other requests require authentication
-                        .anyRequest().authenticated()
-                );
+                        .anyRequest().authenticated());
 
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authTokenFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
 
     @Bean
     public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {

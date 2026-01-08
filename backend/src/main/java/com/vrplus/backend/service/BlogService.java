@@ -7,11 +7,15 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
 @Service
 public class BlogService implements IBlogService {
 
     @Autowired
     private BlogRepository blogRepository;
+
+    @Autowired
+    private TranslationService translationService;
 
     @Override
     public List<BlogPost> getAllPosts() {
@@ -33,6 +37,10 @@ public class BlogService implements IBlogService {
         if (blogRepository.existsBySlug(blogPost.getSlug())) {
             throw new RuntimeException("Slug already exists!");
         }
+
+        // Auto-translate
+        performTranslation(blogPost);
+
         return blogRepository.save(blogPost);
     }
 
@@ -41,14 +49,34 @@ public class BlogService implements IBlogService {
         return blogRepository.findById(id)
                 .map(post -> {
                     post.setTitleVi(blogPostDetails.getTitleVi());
-                    post.setTitleEn(blogPostDetails.getTitleEn());
                     post.setSlug(blogPostDetails.getSlug());
                     post.setContentVi(blogPostDetails.getContentVi());
-                    post.setContentEn(blogPostDetails.getContentEn());
                     post.setThumbnailUrl(blogPostDetails.getThumbnailUrl());
+
+                    // Re-translate logic:
+                    // Only re-translate if English is empty OR we just overwrite it every time
+                    // content changes?
+                    // User policy: "English content is NEVER manually edited... English content is
+                    // auto-generated on the backend"
+                    // Thus, we should ALWAYS regenerate English content when Vietnamese content
+                    // changes.
+                    // Or simply regenerate always on save to ensure sync.
+                    performTranslation(post);
+
                     return blogRepository.save(post);
                 })
                 .orElseThrow(() -> new RuntimeException("Post not found!"));
+    }
+
+    private void performTranslation(BlogPost post) {
+        if (post.getTitleVi() != null) {
+            String titleEn = translationService.translateText(post.getTitleVi(), "vi", "en");
+            post.setTitleEn(titleEn);
+        }
+        if (post.getContentVi() != null) {
+            String contentEn = translationService.translateHtml(post.getContentVi(), "vi", "en");
+            post.setContentEn(contentEn);
+        }
     }
 
     @Override
@@ -69,4 +97,3 @@ public class BlogService implements IBlogService {
                 .orElseThrow(() -> new RuntimeException("Post not found!"));
     }
 }
-

@@ -7,7 +7,7 @@ import Viewer360 from '../components/Viewer360';
 import Viewer3D from '../components/Viewer3D';
 import { useTranslation } from 'react-i18next';
 import { Info, MapPin, Layers, Image as ImageIcon } from 'lucide-react';
-import { getThumbnailUrl, getPanoramaUrl } from '../utils/fileUtils';
+import { getThumbnailUrl, getPanoramaUrl, getModelUrl } from '../utils/fileUtils';
 import Skeleton from '../components/common/Skeleton';
 
 
