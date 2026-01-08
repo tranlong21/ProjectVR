@@ -22,8 +22,12 @@ const normalizeUrl = (cleanUrl) => {
     }
 
     // 3) `/uploads/...`
+    // if (cleanUrl.startsWith("/uploads/")) {
+    //     return `${API_BASE_URL}${cleanUrl}`;
+    // }
+
     if (cleanUrl.startsWith("/uploads/")) {
-        return `${API_BASE_URL}${cleanUrl}`;
+        return cleanUrl;
     }
 
     // 4) `uploads/...` (thiếu dấu /)

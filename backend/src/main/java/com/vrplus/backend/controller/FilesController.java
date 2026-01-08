@@ -23,25 +23,25 @@ public class FilesController {
     @Autowired
     private FilesStorageService storageService;
 
-    @GetMapping("/**")
-    public ResponseEntity<Resource> getFile(HttpServletRequest request) {
-        try {
-            String requestUri = request.getRequestURI();
-            String filePath = requestUri.replaceFirst("/api/files", "");
-
-            Resource file = storageService.load(filePath);
-            String contentType = detectContentType(filePath, file);
-
-            return ResponseEntity.ok()
-                    .contentType(MediaType.parseMediaType(contentType))
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getFilename() + "\"")
-                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000")
-                    .body(file);
-
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+//    @GetMapping("/**")
+//    public ResponseEntity<Resource> getFile(HttpServletRequest request) {
+//        try {
+//            String requestUri = request.getRequestURI();
+//            String filePath = requestUri.replaceFirst("/api/files", "");
+//
+//            Resource file = storageService.load(filePath);
+//            String contentType = detectContentType(filePath, file);
+//
+//            return ResponseEntity.ok()
+//                    .contentType(MediaType.parseMediaType(contentType))
+//                    .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + file.getFilename() + "\"")
+//                    .header(HttpHeaders.CACHE_CONTROL, "public, max-age=31536000")
+//                    .body(file);
+//
+//        } catch (Exception e) {
+//            return ResponseEntity.notFound().build();
+//        }
+//    }
 
     @PostMapping("/upload/gallery")
     public ResponseEntity<?> uploadGallery(@RequestParam("file") MultipartFile file) {
