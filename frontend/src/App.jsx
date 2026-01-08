@@ -30,6 +30,7 @@ import SolutionCategory from './pages/solutions/SolutionCategory';
 // Admin Pages
 import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminProjects from './pages/admin/AdminProjects';
+import AdminCategories from './pages/admin/AdminCategories';
 import AdminBlog from './pages/admin/AdminBlog';
 import AdminScenes from './pages/admin/AdminScenes';
 import AdminModels from './pages/admin/AdminModels';
@@ -87,6 +88,7 @@ const App = () => {
                 <Route element={<AdminLayout />}>
                     <Route path="/admin/dashboard" element={<AdminDashboard />} />
                     <Route path="/admin/projects" element={<AdminProjects />} />
+                    <Route path="/admin/categories" element={<AdminCategories />} />
                     <Route path="/admin/blog" element={<AdminBlog />} />
                     <Route path="/admin/scenes" element={<AdminScenes />} />
                     <Route path="/admin/models" element={<AdminModels />} />

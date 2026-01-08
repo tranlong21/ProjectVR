@@ -1,16 +1,17 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Box, Folder, Image, Users, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, Box, Folder, Image, Users, LogOut, Layers } from 'lucide-react';
 
 const SidebarAdmin = ({ collapsed, theme }) => {
     const navItems = [
         { path: '/admin', icon: <LayoutDashboard size={20} />, label: 'Dashboard', end: true },
         { path: '/admin/projects', icon: <Folder size={20} />, label: 'Projects' },
+        { path: '/admin/categories', icon: <Layers size={20} />, label: 'Categories' },
         { path: '/admin/blog', icon: <FileText size={20} />, label: 'Blog' },
         { path: '/admin/models', icon: <Box size={20} />, label: 'Models' },
         { path: '/admin/scenes', icon: <Image size={20} />, label: 'Scenes' },
         { path: '/admin/users', icon: <Users size={20} />, label: 'Users' },
-        { path: '/admin/gallery', icon: <Users size={20} />, label: 'Gallery' },
+        { path: '/admin/gallery', icon: <Image size={20} />, label: 'Gallery' },
     ];
 
     return (
