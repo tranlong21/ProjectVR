@@ -4,27 +4,33 @@ const ENDPOINT = '/blog';
 const ADMIN_ENDPOINT = '/admin/blogs';
 
 export const getAll = async () => {
+    // Use public endpoint for fetching all blogs to avoid 401 for guests
     const response = await api.get(ENDPOINT);
     return response.data;
 };
 
+export const getBySlug = async (slug) => {
+    const response = await api.get(`${ENDPOINT}/${slug}`);
+    return response.data;
+};
+
 export const getById = async (id) => {
-    const response = await api.get(`${ENDPOINT}/${id}`);
+    const response = await api.get(`${ADMIN_ENDPOINT}/${id}`);
     return response.data;
 };
 
 export const create = async (data) => {
-    const response = await api.post(ENDPOINT, data);
+    const response = await api.post(ADMIN_ENDPOINT, data);
     return response.data;
 };
 
 export const update = async (id, data) => {
-    const response = await api.put(`${ENDPOINT}/${id}`, data);
+    const response = await api.put(`${ADMIN_ENDPOINT}/${id}`, data);
     return response.data;
 };
 
 export const remove = async (id) => {
-    const response = await api.delete(`${ENDPOINT}/${id}`);
+    const response = await api.delete(`${ADMIN_ENDPOINT}/${id}`);
     return response.data;
 };
 
@@ -38,6 +44,5 @@ export const uploadThumbnail = async (id, file) => {
         { headers: { "Content-Type": "multipart/form-data" } }
     );
 
-    return response.data; // trả về URL đúng từ BE
+    return response.data;
 };
-
