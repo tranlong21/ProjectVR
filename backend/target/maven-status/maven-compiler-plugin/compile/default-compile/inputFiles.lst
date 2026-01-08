@@ -1,4 +1,6 @@
+D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\admin\AdminCategoryController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\model\Role.java
+D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\TranslationService.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\AuthController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\HotspotRepository.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\Model3DRepository.java
@@ -39,9 +41,11 @@ D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\IBlogService.ja
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\IModel3DService.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\admin\AdminDashboardController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\BlogService.java
+D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\BlogImageRepository.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\IProjectService.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\BlogController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\security\jwt\AuthTokenFilter.java
+D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\admin\AdminBlogImageController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\service\CategoryService.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\SceneRepository.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\FilesController.java
@@ -50,6 +54,7 @@ D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\config\WebConfig.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\ProjectRepository.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\admin\AdminHotspotController.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\repository\CategoryRepository.java
+D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\model\BlogImage.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\payload\request\SignupRequest.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\security\WebSecurityConfig.java
 D:\ProjectVR\VR\backend\src\main\java\com\vrplus\backend\controller\CategoryController.java
