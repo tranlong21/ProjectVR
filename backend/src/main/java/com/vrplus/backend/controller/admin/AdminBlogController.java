@@ -10,6 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import com.vrplus.backend.payload.request.AiGenerateBlogRequest;
+import com.vrplus.backend.payload.response.AiGenerateBlogResponse;
+import com.vrplus.backend.service.AiBlogService;
+import lombok.RequiredArgsConstructor;
+
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -24,6 +29,10 @@ public class AdminBlogController {
     private IBlogService blogService;
     @Autowired
     private FileStorageService fileStorageService;
+
+    @Autowired
+    private AiBlogService aiBlogService;
+
 
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -96,4 +105,19 @@ public class AdminBlogController {
             return ResponseEntity.badRequest().body("Error uploading thumbnail: " + e.getMessage());
         }
     }
+
+    @PostMapping("/generate")
+    public AiGenerateBlogResponse generateBlog(
+            @RequestBody AiGenerateBlogRequest request
+    ) {
+        String content = aiBlogService.generateBlog(request);
+
+        String title = request.getTitle() != null
+                ? request.getTitle()
+                : "Bài viết AI về " + request.getTopic();
+
+        return new AiGenerateBlogResponse(title, content);
+    }
+
+
 }

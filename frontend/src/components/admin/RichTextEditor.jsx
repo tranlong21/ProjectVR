@@ -1,5 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bold, Italic, Underline, List, ListOrdered, Quote, Heading1, Heading2, Image as ImageIcon, Link } from 'lucide-react';
+import {
+    Bold,
+    Italic,
+    Underline,
+    List,
+    ListOrdered,
+    Quote,
+    Heading1,
+    Heading2,
+    Image as ImageIcon,
+    Link
+} from 'lucide-react';
 import ImageSelector from './ImageSelector';
 
 const RichTextEditor = ({ value, onChange, label }) => {
@@ -7,17 +18,11 @@ const RichTextEditor = ({ value, onChange, label }) => {
     const editorRef = useRef(null);
     const [showImageSelector, setShowImageSelector] = useState(false);
 
-    // Ref to track if we are currently handling an update from props
-    // to avoid loop or cursor jump issues, although with contentEditable it's tricky.
-    const isLocked = useRef(false);
-
-    // Ref to track IME composition state
     const isComposing = useRef(false);
 
-    // Sync HTML to Visual when switching to VISUAL
+    // Sync HTML -> Visual
     useEffect(() => {
         if (mode === 'VISUAL' && editorRef.current) {
-            // Only update if content is different to avoid cursor reset
             if (editorRef.current.innerHTML !== value) {
                 editorRef.current.innerHTML = value || '';
             }
@@ -44,12 +49,30 @@ const RichTextEditor = ({ value, onChange, label }) => {
 
     const handleCompositionEnd = () => {
         isComposing.current = false;
-        handleInput(); // Commit changes after composition
+        handleInput();
     };
 
-    // Prevent component update during composition to avoid rendering artifacts
-    const shouldComponentUpdate = () => {
-        return !isComposing.current;
+    /* ===== CORE: wrap selection with <span style=""> ===== */
+    const wrapSelectionWithSpan = (styleObj) => {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        if (range.collapsed) return;
+
+        const span = document.createElement('span');
+        Object.assign(span.style, styleObj);
+
+        const content = range.extractContents();
+        span.appendChild(content);
+        range.insertNode(span);
+
+        selection.removeAllRanges();
+        const newRange = document.createRange();
+        newRange.selectNodeContents(span);
+        selection.addRange(newRange);
+
+        handleInput();
     };
 
     const insertImage = (img) => {
@@ -57,19 +80,17 @@ const RichTextEditor = ({ value, onChange, label }) => {
         if (mode === 'VISUAL') {
             execCmd('insertImage', url);
         } else {
-            // Insert at end in HTML mode (simpler)
-            const html = value + `<img src="${url}" alt="${img.altText}" />`;
-            onChange(html);
+            onChange(value + `<img src="${url}" alt="${img.altText || ''}" />`);
         }
         setShowImageSelector(false);
     };
 
-    const ToolbarButton = ({ icon: Icon, onClick, active = false, title }) => (
+    const ToolbarButton = ({ icon: Icon, onClick, title }) => (
         <button
             type="button"
-            onClick={onClick}
             title={title}
-            className={`p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-700 ${active ? 'bg-gray-200 dark:bg-slate-600' : ''}`}
+            onClick={onClick}
+            className="p-2 rounded hover:bg-gray-100 dark:hover:bg-slate-700"
         >
             <Icon size={18} className="text-gray-700 dark:text-gray-300" />
         </button>
@@ -77,20 +98,29 @@ const RichTextEditor = ({ value, onChange, label }) => {
 
     return (
         <div className="border border-gray-300 dark:border-slate-600 rounded-lg overflow-hidden flex flex-col h-[500px]">
-            {/* Header / Tabs */}
+
+            {/* Tabs */}
             <div className="flex justify-between items-center bg-gray-50 dark:bg-slate-700 px-2 py-1 border-b border-gray-300 dark:border-slate-600">
                 <div className="flex space-x-2">
                     <button
                         type="button"
                         onClick={() => setMode('VISUAL')}
-                        className={`px-3 py-1 text-sm font-medium rounded-t-md ${mode === 'VISUAL' ? 'bg-white dark:bg-slate-800 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-3 py-1 text-sm font-medium rounded-t-md ${
+                            mode === 'VISUAL'
+                                ? 'bg-white dark:bg-slate-800 text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
                     >
                         Visual
                     </button>
                     <button
                         type="button"
                         onClick={() => setMode('HTML')}
-                        className={`px-3 py-1 text-sm font-medium rounded-t-md ${mode === 'HTML' ? 'bg-white dark:bg-slate-800 text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        className={`px-3 py-1 text-sm font-medium rounded-t-md ${
+                            mode === 'HTML'
+                                ? 'bg-white dark:bg-slate-800 text-blue-600'
+                                : 'text-gray-500 hover:text-gray-700'
+                        }`}
                     >
                         HTML
                     </button>
@@ -98,37 +128,84 @@ const RichTextEditor = ({ value, onChange, label }) => {
                 {label && <span className="text-xs font-semibold uppercase text-gray-500 mr-2">{label}</span>}
             </div>
 
-            {/* Toolbar (Only for Visual) */}
+            {/* Toolbar */}
             {mode === 'VISUAL' && (
-                <div className="flex flex-wrap gap-1 p-2 border-b border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800">
+                <div className="flex flex-wrap items-center gap-1 p-2 border-b border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800">
+
                     <ToolbarButton icon={Bold} onClick={() => execCmd('bold')} title="Bold" />
                     <ToolbarButton icon={Italic} onClick={() => execCmd('italic')} title="Italic" />
                     <ToolbarButton icon={Underline} onClick={() => execCmd('underline')} title="Underline" />
-                    <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+
+                    {/* Text color */}
+                    <input
+                        type="color"
+                        title="Text color"
+                        className="w-8 h-8 p-0 border rounded cursor-pointer"
+                        onChange={(e) => wrapSelectionWithSpan({ color: e.target.value })}
+                    />
+
+                    {/* Font size */}
+                    <select
+                        title="Font size"
+                        className="text-sm border rounded px-2 py-1 bg-white dark:bg-slate-700"
+                        onChange={(e) => {
+                            if (e.target.value) {
+                                wrapSelectionWithSpan({ fontSize: e.target.value });
+                                e.target.value = '';
+                            }
+                        }}
+                    >
+                        <option value="">Size</option>
+                        <option value="14px">S</option>
+                        <option value="16px">M</option>
+                        <option value="20px">L</option>
+                        <option value="24px">XL</option>
+                    </select>
+
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
                     <ToolbarButton icon={Heading1} onClick={() => execCmd('formatBlock', 'H1')} title="Heading 1" />
                     <ToolbarButton icon={Heading2} onClick={() => execCmd('formatBlock', 'H2')} title="Heading 2" />
-                    <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
                     <ToolbarButton icon={List} onClick={() => execCmd('insertUnorderedList')} title="Bullet List" />
                     <ToolbarButton icon={ListOrdered} onClick={() => execCmd('insertOrderedList')} title="Numbered List" />
                     <ToolbarButton icon={Quote} onClick={() => execCmd('formatBlock', 'BLOCKQUOTE')} title="Quote" />
-                    <div className="w-px h-6 bg-gray-300 mx-1 self-center"></div>
+
+                    <div className="w-px h-6 bg-gray-300 mx-1"></div>
+
+                    {/* Link */}
+                    <ToolbarButton
+                        icon={Link}
+                        title="Insert link"
+                        onClick={() => {
+                            const url = prompt('Nhập URL:');
+                            if (url) execCmd('createLink', url);
+                        }}
+                    />
+
+                    {/* Image */}
                     <ToolbarButton icon={ImageIcon} onClick={() => setShowImageSelector(true)} title="Insert Image" />
                 </div>
             )}
 
-            {/* Editor Area */}
-            <div className="flex-1 overflow-auto bg-white dark:bg-slate-800 relative">
+            {/* Editor */}
+            <div className="flex-1 overflow-auto bg-white dark:bg-slate-800">
                 {mode === 'VISUAL' ? (
                     <div
-                        key="visual-editor" // Force remount if needed, but here just identifier
                         ref={editorRef}
                         contentEditable
                         onInput={handleInput}
                         onCompositionStart={handleCompositionStart}
                         onCompositionEnd={handleCompositionEnd}
-                        className="prose dark:prose-invert max-w-none p-4 min-h-full outline-none focus:ring-0"
-                        style={{ minHeight: '100%' }}
-                        suppressContentEditableWarning={true}
+                        className="
+                            prose prose-slate max-w-none
+                            dark:prose-invert
+                            p-4 min-h-full
+                            outline-none focus:ring-0
+                        "
+                        suppressContentEditableWarning
                     />
                 ) : (
                     <textarea
