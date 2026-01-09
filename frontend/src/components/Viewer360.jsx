@@ -14,6 +14,7 @@ const Viewer360 = ({
   initialSceneId = null,
   i18n = { language: 'vi' },
   onSceneChange,
+  onClick,
 }) => {
   const wrapperRef = useRef(null);
   const viewerContainer = useRef(null);
@@ -22,6 +23,13 @@ const Viewer360 = ({
   const mouseEventsAttached = useRef(false);
   const lastHoveredElement = useRef(null);
   const lastClickTimeRef = useRef(0);
+  
+
+  const mouseDragRef = useRef({
+    isDragging: false,
+    startX: 0,
+    startY: 0,
+  });
 
   // ✅ Track "effective" gesture to avoid flicker mixing actions
   const prevGestureTypeRef = useRef(GestureType.NONE);
@@ -150,6 +158,38 @@ const Viewer360 = ({
       setTimeout(() => targetElement.classList.remove('clicked-anim'), 200);
     }
   };
+
+  // Admin Picker: click lên panorama để lấy yaw/pitch
+  const handleViewerClickForPick = useCallback((e) => {
+  if (!onClick || !viewerReady) return;
+
+  if (mouseDragRef.current?.isDragging) {
+    mouseDragRef.current.isDragging = false;
+    return;
+  }
+
+  const viewer = viewerInstance.current;
+  if (!viewer) return;
+
+  const el = document.elementFromPoint(e.clientX, e.clientY);
+  if (
+    el?.closest('.custom-hotspot') ||
+    el?.closest('.pnlm-hotspot') ||
+    el?.closest('.pnlm-hotspot-base')
+  ) {
+    return;
+  }
+
+  // ✅ API CHẮC CHẮN TỒN TẠI
+  const yaw = viewer.getYaw();
+  const pitch = viewer.getPitch();
+
+  onClick(
+    Number(pitch.toFixed(2)),
+    Number(yaw.toFixed(2))
+  );
+}, [onClick, viewerReady]);
+
 
   const getIconFile = (hotspot) => {
     if (hotspot.type === 'link_scene') return `/assets/icons/${hotspot.icon || 'arrow_right'}.png`;
@@ -324,8 +364,8 @@ const Viewer360 = ({
 
         const spherical = new THREE.Spherical(10, phi, theta);
 
-    
-        spherical.theta -= deltaX * rotationSpeed * 10; 
+
+        spherical.theta -= deltaX * rotationSpeed * 10;
         spherical.theta -= deltaX * rotationSpeed * 5; // Tuning for Pannellum scale
         spherical.phi -= deltaY * rotationSpeed * 5;
 
@@ -438,7 +478,7 @@ const Viewer360 = ({
       if (wrapperRef.current?.requestFullscreen) {
         wrapperRef.current.requestFullscreen().catch(e => console.error(e));
       } else if (wrapperRef.current?.webkitRequestFullscreen) {
-        wrapperRef.current.webkitRequestFullscreen(); 
+        wrapperRef.current.webkitRequestFullscreen();
       }
       setIsFullscreen(true);
     } else {
@@ -455,6 +495,48 @@ const Viewer360 = ({
     const s = scenes.find(x => normalizeId(x.id) === normalizeId(currentSceneId));
     if (s) loadScene(s);
   }, [currentSceneId, scenes]);
+
+  // Bắt click lên viewer container để pick yaw/pitch (Admin)
+  useEffect(() => {
+    const el = viewerContainer.current;
+    if (!el) return;
+
+    // dùng capture=true để bắt click trước khi pannellum xử lý
+    el.addEventListener('click', handleViewerClickForPick, true);
+
+    return () => {
+      el.removeEventListener('click', handleViewerClickForPick, true);
+    };
+  }, [handleViewerClickForPick]);
+
+  useEffect(() => {
+    const el = viewerContainer.current;
+    if (!el) return;
+
+    const DRAG_THRESHOLD = 5;
+
+    const onMouseDown = (e) => {
+      mouseDragRef.current.isDragging = false;
+      mouseDragRef.current.startX = e.clientX;
+      mouseDragRef.current.startY = e.clientY;
+    };
+
+    const onMouseMove = (e) => {
+      const dx = Math.abs(e.clientX - mouseDragRef.current.startX);
+      const dy = Math.abs(e.clientY - mouseDragRef.current.startY);
+      if (dx > DRAG_THRESHOLD || dy > DRAG_THRESHOLD) {
+        mouseDragRef.current.isDragging = true;
+      }
+    };
+
+    el.addEventListener('mousedown', onMouseDown);
+    el.addEventListener('mousemove', onMouseMove);
+
+    return () => {
+      el.removeEventListener('mousedown', onMouseDown);
+      el.removeEventListener('mousemove', onMouseMove);
+    };
+  }, []);
 
   return (
     <div ref={wrapperRef} className="relative w-full h-full bg-gray-900 group select-none overflow-hidden touch-none">

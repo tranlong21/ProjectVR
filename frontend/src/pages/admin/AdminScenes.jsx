@@ -28,7 +28,6 @@ const AdminScenes = () => {
     const [isPickerOpen, setIsPickerOpen] = useState(false);
 
 
-
     // Scene Form Data - ALL fields have default values to prevent controlled/uncontrolled switching
     const [sceneFormData, setSceneFormData] = useState({
         name: '',
@@ -868,27 +867,39 @@ const AdminScenes = () => {
                             </div>
                             {isPickerOpen && (
                                 <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-                                    <div className="bg-white dark:bg-slate-800 w-full max-w-5xl h-[80vh] rounded-lg relative overflow-hidden">
+                                    <div className="bg-white dark:bg-slate-800 w-full max-w-5xl h-[80vh] rounded-lg relative overflow-hidden flex flex-col">
 
-                                        <button
-                                            className="absolute top-3 right-3 text-white bg-red-600 px-3 py-1 rounded-lg"
-                                            onClick={() => setIsPickerOpen(false)}
-                                        >
-                                            Đóng
-                                        </button>
+                                        {/* HEADER */}
+                                        <div className="flex items-center justify-between px-4 py-2 border-b dark:border-slate-700">
+                                            <div className="text-sm text-gray-700 dark:text-gray-300">
+                                                Click vào ảnh 360° để lấy vị trí Hotspot.
+                                            </div>
 
-                                        <Viewer360
-                                            scenes={[currentScene]}
-                                            initialSceneId={currentScene.id}
-                                            onClick={(pitch, yaw) => {
-                                                setHotspotFormData(prev => ({
-                                                    ...prev,
-                                                    pitch: parseFloat(pitch.toFixed(2)),
-                                                    yaw: parseFloat(yaw.toFixed(2)),
-                                                }));
-                                                setIsPickerOpen(false);
-                                            }}
-                                        />
+                                            <button
+                                                onClick={() => setIsPickerOpen(false)}
+                                                className="px-3 py-1 rounded-md bg-gray-200 hover:bg-gray-300
+                                                             dark:bg-slate-600 dark:hover:bg-slate-500 text-sm"
+                                            >
+                                                Hủy
+                                            </button>
+                                        </div>
+
+                                        {/* VIEWER */}
+                                        <div className="flex-1">
+                                            <Viewer360
+                                                scenes={[currentScene]}
+                                                initialSceneId={currentScene.id}
+                                                onClick={(pitch, yaw) => {
+                                                    // console.log('PICKED:', pitch, yaw);
+                                                    setHotspotFormData(prev => ({
+                                                        ...prev,
+                                                        pitch: parseFloat(pitch.toFixed(2)),
+                                                        yaw: parseFloat(yaw.toFixed(2)),
+                                                    }));
+                                                    setIsPickerOpen(false);
+                                                }}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                             )}
