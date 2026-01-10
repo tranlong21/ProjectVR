@@ -83,7 +83,6 @@ const Education = () => {
           {/* ===== ONLY ONE WEBGL HERE ===== */}
           <div className="h-[50vh] md:h-[70vh] rounded-xl overflow-hidden border border-[var(--border-color)] bg-black">
 
-            {/* VR 360 */}
             {activeTab === '360' && (
               <Viewer360
                 scenes={scenes}
@@ -91,7 +90,6 @@ const Education = () => {
               />
             )}
 
-            {/* UNITY WEBGL */}
             {activeTab === '3d' && (
               <UnityViewer />
             )}
@@ -101,17 +99,17 @@ const Education = () => {
 
         <div className="mt-6 flex justify-center">
           <Link
-            to="/projects"
+            to="/projects/16"
             className="inline-flex items-center gap-2 text-lg font-medium text-[var(--accent-purple)] hover:text-purple-400 transition-colors"
           >
-            👉 Trải nghiệm hệ sinh thái VR giáo dục
+            Trải nghiệm hệ sinh thái VR giáo dục
             <ArrowRight size={20} />
           </Link>
         </div>
       </section>
 
-      {/* ===== MAIN CONTENT (KHÔNG WEBGL) ===== */}
-      <article className="max-w-4xl mx-auto px-4 pb-32 space-y-20">
+      {/* ===== BLOG / CASE STUDY CONTENT ===== */}
+      <article className="max-w-4xl mx-auto px-4 pb-32 space-y-24">
 
         {/* INTRO */}
         <section>
@@ -127,30 +125,46 @@ const Education = () => {
           </p>
         </section>
 
-        {/* WHY VR */}
+        {/* IMAGE 1 */}
         <section className="space-y-6">
-          <h2 className="text-3xl font-bold flex items-center gap-3">
-            <GraduationCap className="w-8 h-8 text-[var(--accent-purple)]" />
-            Vì sao đại học cần VR & 3D?
-          </h2>
+          <img
+            src="/assets/images/huces/huce.png"
+            alt="HUCE Campus VR"
+            className="rounded-2xl shadow-xl w-full"
+          />
+          <p className="text-[var(--text-secondary)] leading-relaxed">
+            Toàn cảnh khuôn viên Đại học Xây dựng Hà Nội được số hóa bằng công nghệ
+            VR 360°, cho phép người xem tham quan từ xa như đang đứng trực tiếp
+            tại trường.
+          </p>
+        </section>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="glass-panel p-6 rounded-xl border-l-4 border-[var(--accent-purple)]">
-              <h3 className="font-bold text-lg mb-2">Minh bạch & trực quan</h3>
-              <p className="text-sm text-[var(--text-secondary)]">
-                Tham quan khuôn viên, phòng học, công trình đào tạo
-                mà không cần đến trực tiếp.
-              </p>
-            </div>
+        {/* IMAGE 2 */}
+        <section className="space-y-6">
+          <img
+            src="/assets/images/huces/huce1.png"
+            alt="HUCE Learning Space"
+            className="rounded-2xl shadow-xl w-full"
+          />
+          <p className="text-[var(--text-secondary)] leading-relaxed">
+            Các không gian học tập, phòng chức năng và khu nghiên cứu
+            được tái hiện chân thực, hỗ trợ sinh viên và phụ huynh
+            hình dung rõ ràng về môi trường đào tạo.
+          </p>
+        </section>
 
-            <div className="glass-panel p-6 rounded-xl border-l-4 border-pink-500">
-              <h3 className="font-bold text-lg mb-2">Học tập tương tác</h3>
-              <p className="text-sm text-[var(--text-secondary)]">
-                Mô hình 3D giúp sinh viên hiểu không gian,
-                kết cấu và quy hoạch tốt hơn.
-              </p>
-            </div>
-          </div>
+        {/* IMAGE 3 */}
+        <section className="space-y-6">
+          <img
+            src="/assets/images/huces/huce2.png"
+            alt="HUCE Virtual Experience"
+            className="rounded-2xl shadow-xl w-full"
+          />
+          <p className="text-[var(--text-secondary)] leading-relaxed">
+            Kết hợp VR 360 và mô hình 3D giúp nhà trường xây dựng
+            hệ sinh thái giáo dục số, phục vụ tuyển sinh, đào tạo
+            và truyền thông thương hiệu trong kỷ nguyên số.
+          </p>
         </section>
 
         {/* TECH STACK */}
@@ -186,7 +200,7 @@ const Education = () => {
           </p>
 
           <Link
-            to="/projects/16"
+            to="/projects?category=education"
             className="px-8 py-3 bg-[var(--accent-purple)] text-white rounded-full font-bold
                         shadow-lg hover:shadow-[var(--accent-purple)]/40 transition-all"
           >
