@@ -23,6 +23,7 @@ const AdminBlog = () => {
     const [showThumbnailSelector, setShowThumbnailSelector] = useState(false);
     const [isAiConfigOpen, setIsAiConfigOpen] = useState(true);
 
+
     const [formData, setFormData] = useState({
         id: null,
         titleVi: '',
@@ -72,8 +73,8 @@ const AdminBlog = () => {
         });
         setAiConfig({
             topic: '',
-            minWords: 1200,
-            maxWords: 1500,
+            minWords: 600,
+            maxWords: 800,
             audience: 'kỹ sư xây dựng, QS, PM'
         });
     };
@@ -229,7 +230,10 @@ const AdminBlog = () => {
             className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)]"
         >
             {/* LEFT PANEL */}
-            <div className="flex-1 flex flex-col gap-4 overflow-y-auto">
+            {/* LEFT PANEL */}
+            <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
+
+                {/* HEADER */}
                 <div className="flex items-center gap-4">
                     <button type="button" onClick={handleBack}>
                         <ArrowLeft />
@@ -239,103 +243,115 @@ const AdminBlog = () => {
                     </h1>
                 </div>
 
-                {/* TITLE */}
-                <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
-                    <input
-                        value={formData.titleVi}
-                        onChange={e =>
-                            setFormData({ ...formData, titleVi: e.target.value })
-                        }
-                        placeholder="Tiêu đề bài viết"
-                        className="w-full text-xl font-bold p-2 border rounded bg-transparent dark:text-white"
-                        required
-                    />
-                </div>
-
-                {/* AI COLLAPSIBLE BOX */}
+                {/* TITLE + AI CONFIG (MERGED, COLLAPSED BY DEFAULT) */}
                 <div className="bg-white dark:bg-slate-800 rounded shadow overflow-hidden">
+
+                    {/* TITLE (ALWAYS VISIBLE) */}
                     <div
-                        className="flex items-center justify-between px-4 py-3 cursor-pointer"
+                        className="p-4 cursor-pointer"
                         onClick={() => setIsAiConfigOpen(!isAiConfigOpen)}
                     >
-                        <h3
-                            className={`font-semibold dark:text-white ${
-                                !isAiConfigOpen ? 'truncate' : ''
-                            }`}
-                        >
-                            {formData.titleVi || 'Cấu hình tạo nội dung bằng AI'}
-                        </h3>
-                        {isAiConfigOpen ? <ChevronUp /> : <ChevronDown />}
+                        <input
+                            value={formData.titleVi}
+                            onChange={e =>
+                                setFormData({ ...formData, titleVi: e.target.value })
+                            }
+                            placeholder="Tiêu đề bài viết"
+                            className="w-full text-xl font-bold p-2 border rounded bg-transparent dark:text-white"
+                            required
+                        />
                     </div>
 
+                    {/* AI CONFIG (COLLAPSIBLE) */}
                     {isAiConfigOpen && (
-                        <div className="p-4 space-y-4 border-t dark:border-slate-700">
-                            <textarea
-                                value={aiConfig.topic}
-                                onChange={e =>
-                                    setAiConfig({ ...aiConfig, topic: e.target.value })
-                                }
-                                placeholder="Chủ đề triển khai nội dung (AI)"
-                                className="w-full p-2 border rounded bg-transparent dark:text-white"
-                                rows={2}
-                            />
+                        <div className="border-t dark:border-slate-700 bg-slate-800/40">
 
-                            <div className="flex gap-4">
-                                <input
-                                    type="number"
-                                    value={aiConfig.minWords}
+                            {/* SCROLLABLE CONFIG */}
+                            <div className="p-4 space-y-4 max-h-[300px] overflow-y-auto">
+
+                                {/* TOPIC */}
+                                <textarea
+                                    value={aiConfig.topic}
                                     onChange={e =>
-                                        setAiConfig({
-                                            ...aiConfig,
-                                            minWords: +e.target.value
-                                        })
+                                        setAiConfig({ ...aiConfig, topic: e.target.value })
                                     }
-                                    className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                    placeholder="Chủ đề triển khai nội dung (AI)"
+                                    className="w-full p-2 border rounded bg-transparent dark:text-white"
+                                    rows={2}
                                 />
+
+                                {/* WORD RANGE */}
+                                <div className="flex gap-4">
+                                    <input
+                                        type="number"
+                                        value={aiConfig.minWords}
+                                        onChange={e =>
+                                            setAiConfig({
+                                                ...aiConfig,
+                                                minWords: +e.target.value
+                                            })
+                                        }
+                                        placeholder="Số từ tối thiểu"
+                                        className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                    />
+                                    <input
+                                        type="number"
+                                        value={aiConfig.maxWords}
+                                        onChange={e =>
+                                            setAiConfig({
+                                                ...aiConfig,
+                                                maxWords: +e.target.value
+                                            })
+                                        }
+                                        placeholder="Số từ tối đa"
+                                        className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                    />
+                                </div>
+
+                                {/* AUDIENCE */}
                                 <input
-                                    type="number"
-                                    value={aiConfig.maxWords}
+                                    value={aiConfig.audience}
                                     onChange={e =>
                                         setAiConfig({
                                             ...aiConfig,
-                                            maxWords: +e.target.value
+                                            audience: e.target.value
                                         })
                                     }
-                                    className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                    placeholder="Đối tượng đọc (VD: kỹ sư xây dựng, QS, PM...)"
+                                    className="w-full p-2 border rounded bg-transparent dark:text-white"
                                 />
                             </div>
 
-                            <input
-                                value={aiConfig.audience}
-                                onChange={e =>
-                                    setAiConfig({
-                                        ...aiConfig,
-                                        audience: e.target.value
-                                    })
-                                }
-                                className="w-full p-2 border rounded bg-transparent dark:text-white"
-                            />
-
-                            <button
-                                type="button"
-                                onClick={handleGenerateAI}
-                                disabled={aiLoading}
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded bg-purple-600 text-white"
-                            >
-                                <Sparkles size={16} />
-                                {aiLoading ? 'Đang tạo...' : 'Tạo nội dung bằng AI'}
-                            </button>
+                            {/* GENERATE BUTTON (FIXED INSIDE BOX) */}
+                            <div className="p-4 border-t dark:border-slate-700 bg-slate-900">
+                                <button
+                                    type="button"
+                                    onClick={handleGenerateAI}
+                                    disabled={aiLoading}
+                                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded font-semibold text-white
+                            ${aiLoading
+                                            ? 'bg-gray-500 cursor-not-allowed'
+                                            : 'bg-purple-600 hover:bg-purple-700'
+                                        }
+                        `}
+                                >
+                                    ✨ {aiLoading ? 'Đang tạo nội dung...' : 'Tạo nội dung bằng AI'}
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* EDITOR */}
-                <RichTextEditor
-                    value={formData.contentVi}
-                    onChange={val =>
-                        setFormData(prev => ({ ...prev, contentVi: val }))
-                    }
-                />
+                {/* EDITOR – SCROLL RIÊNG */}
+                <div className="flex-1 min-h-0 overflow-y-auto">
+                    <RichTextEditor
+                        value={formData.contentVi}
+                        onChange={val =>
+                            setFormData(prev => ({ ...prev, contentVi: val }))
+                        }
+                    />
+                </div>
+
             </div>
 
             {/* RIGHT PANEL */}

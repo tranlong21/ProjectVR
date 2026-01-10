@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import Viewer360 from '../../components/Viewer360';
-import Viewer3D from '../../components/Viewer3D';
+import UnityViewer from '../../components/unity/UnityViewer';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -10,10 +10,10 @@ import {
 } from 'lucide-react';
 
 const Education = () => {
-  // 🔑 TAB STATE: chỉ 1 WebGL chạy
+  // 🔑 TAB STATE: chỉ cho phép 1 WebGL chạy
   const [activeTab, setActiveTab] = useState('360'); // '360' | '3d'
 
-  // 🔒 scenes ổn định
+  // 🔒 scenes ổn định cho Viewer360
   const scenes = useMemo(() => [
     {
       id: 'huce-campus',
@@ -35,7 +35,8 @@ const Education = () => {
           cho Giáo Dục Đại Học
         </h1>
         <p className="text-xl md:text-2xl text-[var(--text-secondary)] max-w-3xl mx-auto">
-          Ứng dụng thực tế ảo trong tham quan – đào tạo – tuyển sinh tại Đại học Xây dựng Hà Nội (HUCE)
+          Ứng dụng thực tế ảo trong tham quan – đào tạo – tuyển sinh
+          tại Đại học Xây dựng Hà Nội (HUCE)
         </p>
       </section>
 
@@ -74,12 +75,15 @@ const Education = () => {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
             </span>
-            {activeTab === '360' ? 'HUCE Virtual Campus' : '3D Learning Model'}
+            {activeTab === '360'
+              ? 'HUCE Virtual Campus'
+              : '3D Learning Model'}
           </div>
 
           {/* ===== ONLY ONE WEBGL HERE ===== */}
           <div className="h-[50vh] md:h-[70vh] rounded-xl overflow-hidden border border-[var(--border-color)] bg-black">
 
+            {/* VR 360 */}
             {activeTab === '360' && (
               <Viewer360
                 scenes={scenes}
@@ -87,14 +91,9 @@ const Education = () => {
               />
             )}
 
+            {/* UNITY WEBGL */}
             {activeTab === '3d' && (
-              <Viewer3D
-                modelUrl="/assets/model3d/LangBacHo.glb"
-                description="Mô hình 3D Lăng Chủ tịch Hồ Chí Minh – ứng dụng trong giảng dạy kiến trúc, lịch sử và quy hoạch đô thị."
-                lang="vi"
-                editMode={false}
-                hotspots={[]}
-              />
+              <UnityViewer />
             )}
 
           </div>
@@ -116,11 +115,14 @@ const Education = () => {
 
         {/* INTRO */}
         <section>
-          <p className="text-lg leading-relaxed text-[var(--text-secondary)] first-letter:text-5xl first-letter:font-bold first-letter:text-[var(--accent-purple)] first-letter:mr-1 first-letter:float-left">
-            Công nghệ VR 360 đang mở ra một cách tiếp cận hoàn toàn mới trong giáo dục đại học.
-            Đối với các trường kỹ thuật như Đại học Xây dựng Hà Nội (HUCE),
-            thực tế ảo không chỉ là công cụ trình diễn,
-            mà còn là nền tảng giúp sinh viên, phụ huynh và xã hội
+          <p className="text-lg leading-relaxed text-[var(--text-secondary)]
+            first-letter:text-5xl first-letter:font-bold
+            first-letter:text-[var(--accent-purple)]
+            first-letter:mr-1 first-letter:float-left">
+            Công nghệ VR 360 đang mở ra một cách tiếp cận hoàn toàn mới
+            trong giáo dục đại học. Đối với các trường kỹ thuật như
+            Đại học Xây dựng Hà Nội (HUCE), thực tế ảo không chỉ là công cụ
+            trình diễn, mà còn là nền tảng giúp sinh viên, phụ huynh và xã hội
             tiếp cận môi trường đào tạo một cách trực quan, minh bạch và hiện đại.
           </p>
         </section>
@@ -136,14 +138,16 @@ const Education = () => {
             <div className="glass-panel p-6 rounded-xl border-l-4 border-[var(--accent-purple)]">
               <h3 className="font-bold text-lg mb-2">Minh bạch & trực quan</h3>
               <p className="text-sm text-[var(--text-secondary)]">
-                Tham quan khuôn viên, phòng học, công trình đào tạo mà không cần đến trực tiếp.
+                Tham quan khuôn viên, phòng học, công trình đào tạo
+                mà không cần đến trực tiếp.
               </p>
             </div>
 
             <div className="glass-panel p-6 rounded-xl border-l-4 border-pink-500">
               <h3 className="font-bold text-lg mb-2">Học tập tương tác</h3>
               <p className="text-sm text-[var(--text-secondary)]">
-                Mô hình 3D giúp sinh viên hiểu không gian – kết cấu – quy hoạch tốt hơn.
+                Mô hình 3D giúp sinh viên hiểu không gian,
+                kết cấu và quy hoạch tốt hơn.
               </p>
             </div>
           </div>
@@ -159,8 +163,8 @@ const Education = () => {
           <ul className="space-y-3">
             {[
               'WebXR – chạy trực tiếp trên trình duyệt',
-              'Pannellum (VR 360) & Three.js (3D)',
-              'Streaming GLB/GLTF tối ưu',
+              'VR 360 (Pannellum) & Unity WebGL',
+              'WASM & GPU Acceleration',
               'Hỗ trợ PC, Mobile, VR Headset'
             ].map((item, idx) => (
               <li key={idx} className="flex items-center gap-2">
@@ -182,8 +186,9 @@ const Education = () => {
           </p>
 
           <Link
-            to="/projects"
-            className="px-8 py-3 bg-[var(--accent-purple)] text-white rounded-full font-bold shadow-lg hover:shadow-[var(--accent-purple)]/40 transition-all"
+            to="/projects/16"
+            className="px-8 py-3 bg-[var(--accent-purple)] text-white rounded-full font-bold
+                        shadow-lg hover:shadow-[var(--accent-purple)]/40 transition-all"
           >
             Xem dự án giáo dục mẫu
           </Link>
