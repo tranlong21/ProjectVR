@@ -18,7 +18,7 @@ const Tourism = () => {
         {
             id: 'vietnam-tourism',
             name: 'Vietnam Virtual Tourism',
-            panoramaUrl: '/assets/images/tourism.jpg',
+            panoramaUrl: '/assets/images/NuThanTudo.jpg',
             hotspots: []
         }
     ];
