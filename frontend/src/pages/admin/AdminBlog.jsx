@@ -341,7 +341,7 @@ const AdminBlog = () => {
                                             }
                                 `}
                                     >
-                                        ✨ {aiLoading ? 'Đang tạo nội dung...' : 'Tạo nội dung bằng AI'}
+                                        ✨ {aiLoading ? 'Đang tạo nội dung... (Quá trình có thể mất vài phút, tùy vào độ dài bài viết.)' : 'Tạo nội dung bằng AI'}
                                     </button>
                                 </div>
                             </div>

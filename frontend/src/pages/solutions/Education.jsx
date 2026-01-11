@@ -13,7 +13,7 @@ const Education = () => {
   // 🔑 TAB STATE: chỉ cho phép 1 WebGL chạy
   const [activeTab, setActiveTab] = useState('360'); // '360' | '3d'
 
-  // 🔒 scenes ổn định cho Viewer360
+
   const scenes = useMemo(() => [
     {
       id: 'huce-campus',
