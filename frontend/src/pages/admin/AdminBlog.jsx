@@ -227,176 +227,183 @@ const AdminBlog = () => {
     return (
         <form
             onSubmit={handleSubmit}
-            className="flex flex-col lg:flex-row gap-6 h-[calc(100vh-100px)]"
+            className="min-h-screen space-y-6"
         >
-            {/* LEFT PANEL */}
-            {/* LEFT PANEL */}
-            <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto">
+            {/* ================= HEADER – FULL WIDTH ================= */}
+            <div className="flex items-center gap-4">
+                <button type="button" onClick={handleBack}>
+                    <ArrowLeft />
+                </button>
+                <h1 className="text-2xl font-bold dark:text-white">
+                    {mode === 'CREATE' ? 'Add New Post' : 'Edit Post'}
+                </h1>
+            </div>
 
-                {/* HEADER */}
-                <div className="flex items-center gap-4">
-                    <button type="button" onClick={handleBack}>
-                        <ArrowLeft />
-                    </button>
-                    <h1 className="text-2xl font-bold dark:text-white">
-                        {mode === 'CREATE' ? 'Add New Post' : 'Edit Post'}
-                    </h1>
-                </div>
+            {/* ================= BODY – 2 COLUMNS ================= */}
+            <div className="flex flex-col lg:flex-row gap-6">
 
-                {/* TITLE + AI CONFIG (MERGED, COLLAPSED BY DEFAULT) */}
-                <div className="bg-white dark:bg-slate-800 rounded shadow overflow-hidden">
+                {/* ========== LEFT PANEL ========== */}
+                <div className="flex-1 flex flex-col gap-4 pr-2">
 
-                    {/* TITLE (ALWAYS VISIBLE) */}
-                    <div
-                        className="p-4 cursor-pointer"
-                        onClick={() => setIsAiConfigOpen(!isAiConfigOpen)}
-                    >
-                        <input
-                            value={formData.titleVi}
-                            onChange={e =>
-                                setFormData({ ...formData, titleVi: e.target.value })
-                            }
-                            placeholder="Tiêu đề bài viết"
-                            className="w-full text-xl font-bold p-2 border rounded bg-transparent dark:text-white"
-                            required
-                        />
-                    </div>
+                    {/* TITLE + AI CONFIG */}
+                    <div className="bg-white dark:bg-slate-800 rounded shadow overflow-hidden">
 
-                    {/* AI CONFIG (COLLAPSIBLE) */}
-                    {isAiConfigOpen && (
-                        <div className="border-t dark:border-slate-700 bg-slate-800/40">
+                        {/* TITLE */}
+                        <div className="p-4 flex items-center gap-4">
+                            <input
+                                value={formData.titleVi}
+                                onChange={e =>
+                                    setFormData({ ...formData, titleVi: e.target.value })
+                                }
+                                placeholder="Tiêu đề bài viết"
+                                className="flex-1 text-xl font-bold p-2 border rounded bg-transparent dark:text-white"
+                                required
+                            />
 
-                            {/* SCROLLABLE CONFIG */}
-                            <div className="p-4 space-y-4 max-h-[300px] overflow-y-auto">
+                            <button
+                                type="button"
+                                onClick={() => setIsAiConfigOpen(!isAiConfigOpen)}
+                                className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
+                            >
+                                {isAiConfigOpen ? 'Thu gọn' : 'Cấu rộng'}
+                                {isAiConfigOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                        </div>
 
-                                {/* TOPIC */}
-                                <textarea
-                                    value={aiConfig.topic}
-                                    onChange={e =>
-                                        setAiConfig({ ...aiConfig, topic: e.target.value })
-                                    }
-                                    placeholder="Chủ đề triển khai nội dung (AI)"
-                                    className="w-full p-2 border rounded bg-transparent dark:text-white"
-                                    rows={2}
-                                />
+                        {/* AI CONFIG */}
+                        {isAiConfigOpen && (
+                            <div className="border-t dark:border-slate-700 bg-slate-800/40">
+                                <div className="ml-4 mt-2 flex items-center gap-2 text-s text-purple-400">
+                                    <Sparkles size={14} />
+                                    <span>AI hỗ trợ viết nội dung</span>
+                                </div>
 
-                                {/* WORD RANGE */}
-                                <div className="flex gap-4">
-                                    <input
-                                        type="number"
-                                        value={aiConfig.minWords}
+                                <div className="p-4 space-y-4 max-h-[300px] overflow-y-auto">
+                                    <textarea
+                                        value={aiConfig.topic}
                                         onChange={e =>
-                                            setAiConfig({
-                                                ...aiConfig,
-                                                minWords: +e.target.value
-                                            })
+                                            setAiConfig({ ...aiConfig, topic: e.target.value })
                                         }
-                                        placeholder="Số từ tối thiểu"
-                                        className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                        placeholder="Chủ đề triển khai nội dung (AI)"
+                                        className="w-full p-2 border rounded bg-transparent dark:text-white"
+                                        rows={2}
                                     />
+
+                                    <div className="flex gap-4">
+                                        <input
+                                            type="number"
+                                            value={aiConfig.minWords}
+                                            onChange={e =>
+                                                setAiConfig({
+                                                    ...aiConfig,
+                                                    minWords: +e.target.value
+                                                })
+                                            }
+                                            placeholder="Số từ tối thiểu"
+                                            className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                        />
+                                        <input
+                                            type="number"
+                                            value={aiConfig.maxWords}
+                                            onChange={e =>
+                                                setAiConfig({
+                                                    ...aiConfig,
+                                                    maxWords: +e.target.value
+                                                })
+                                            }
+                                            placeholder="Số từ tối đa"
+                                            className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                        />
+                                    </div>
+
                                     <input
-                                        type="number"
-                                        value={aiConfig.maxWords}
+                                        value={aiConfig.audience}
                                         onChange={e =>
                                             setAiConfig({
                                                 ...aiConfig,
-                                                maxWords: +e.target.value
+                                                audience: e.target.value
                                             })
                                         }
-                                        placeholder="Số từ tối đa"
-                                        className="w-1/2 p-2 border rounded bg-transparent dark:text-white"
+                                        placeholder="Đối tượng đọc (VD: kỹ sư xây dựng, QS, PM...)"
+                                        className="w-full p-2 border rounded bg-transparent dark:text-white"
                                     />
                                 </div>
 
-                                {/* AUDIENCE */}
-                                <input
-                                    value={aiConfig.audience}
-                                    onChange={e =>
-                                        setAiConfig({
-                                            ...aiConfig,
-                                            audience: e.target.value
-                                        })
-                                    }
-                                    placeholder="Đối tượng đọc (VD: kỹ sư xây dựng, QS, PM...)"
-                                    className="w-full p-2 border rounded bg-transparent dark:text-white"
-                                />
+                                <div className="p-4 border-t dark:border-slate-700 bg-slate-900">
+                                    <button
+                                        type="button"
+                                        onClick={handleGenerateAI}
+                                        disabled={aiLoading}
+                                        className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded font-semibold text-white
+                                    ${aiLoading
+                                                ? 'bg-gray-500 cursor-not-allowed'
+                                                : 'bg-purple-600 hover:bg-purple-700'
+                                            }
+                                `}
+                                    >
+                                        ✨ {aiLoading ? 'Đang tạo nội dung...' : 'Tạo nội dung bằng AI'}
+                                    </button>
+                                </div>
                             </div>
+                        )}
+                    </div>
 
-                            {/* GENERATE BUTTON (FIXED INSIDE BOX) */}
-                            <div className="p-4 border-t dark:border-slate-700 bg-slate-900">
-                                <button
-                                    type="button"
-                                    onClick={handleGenerateAI}
-                                    disabled={aiLoading}
-                                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded font-semibold text-white
-                            ${aiLoading
-                                            ? 'bg-gray-500 cursor-not-allowed'
-                                            : 'bg-purple-600 hover:bg-purple-700'
-                                        }
-                        `}
-                                >
-                                    ✨ {aiLoading ? 'Đang tạo nội dung...' : 'Tạo nội dung bằng AI'}
-                                </button>
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* EDITOR – SCROLL RIÊNG */}
-                <div className="flex-1 min-h-0 overflow-y-auto">
-                    <RichTextEditor
-                        value={formData.contentVi}
-                        onChange={val =>
-                            setFormData(prev => ({ ...prev, contentVi: val }))
-                        }
-                    />
-                </div>
-
-            </div>
-
-            {/* RIGHT PANEL */}
-            <div className="w-full lg:w-80 flex flex-col gap-4">
-                <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
-                    <button
-                        type="submit"
-                        className="w-full py-2 bg-blue-600 text-white rounded"
-                    >
-                        <Save size={16} /> {mode === 'CREATE' ? 'Publish' : 'Update'}
-                    </button>
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
-                    <h3 className="font-bold mb-2">Slug</h3>
-                    <input
-                        value={formData.slug}
-                        onChange={e =>
-                            setFormData({ ...formData, slug: e.target.value })
-                        }
-                        className="w-full p-2 border rounded bg-gray-50 dark:bg-slate-900"
-                    />
-                </div>
-
-                <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
-                    <h3 className="font-bold mb-2">Featured Image</h3>
-                    {formData.thumbnailUrl ? (
-                        <img
-                            src={
-                                formData.thumbnailUrl.startsWith('http')
-                                    ? formData.thumbnailUrl
-                                    : `${import.meta.env.VITE_API_URL}${formData.thumbnailUrl}`
+                    {/* EDITOR – AUTO HEIGHT */}
+                    <div>
+                        <RichTextEditor
+                            value={formData.contentVi}
+                            onChange={val =>
+                                setFormData(prev => ({ ...prev, contentVi: val }))
                             }
-                            onClick={() => setShowThumbnailSelector(true)}
-                            className="w-full rounded cursor-pointer"
                         />
-                    ) : (
-                        <div
-                            onClick={() => setShowThumbnailSelector(true)}
-                            className="border-2 border-dashed p-6 text-center cursor-pointer"
+                    </div>
+                </div>
+
+                {/* ========== RIGHT PANEL ========== */}
+                <div className="w-full lg:w-80 flex flex-col gap-4">
+
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
+                        <button
+                            type="submit"
+                            className="w-full py-2 bg-blue-600 text-white rounded"
                         >
-                            <ImageIcon />
-                            <p>Set featured image</p>
-                        </div>
-                    )}
+                            <Save size={16} /> {mode === 'CREATE' ? 'Publish' : 'Update'}
+                        </button>
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
+                        <h3 className="font-bold mb-2">Slug</h3>
+                        <input
+                            value={formData.slug}
+                            onChange={e =>
+                                setFormData({ ...formData, slug: e.target.value })
+                            }
+                            className="w-full p-2 border rounded bg-gray-50 dark:bg-slate-900"
+                        />
+                    </div>
+
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded shadow">
+                        <h3 className="font-bold mb-2">Featured Image</h3>
+                        {formData.thumbnailUrl ? (
+                            <img
+                                src={
+                                    formData.thumbnailUrl.startsWith('http')
+                                        ? formData.thumbnailUrl
+                                        : `${import.meta.env.VITE_API_URL}${formData.thumbnailUrl}`
+                                }
+                                onClick={() => setShowThumbnailSelector(true)}
+                                className="w-full rounded cursor-pointer"
+                            />
+                        ) : (
+                            <div
+                                onClick={() => setShowThumbnailSelector(true)}
+                                className="border-2 border-dashed p-6 text-center cursor-pointer"
+                            >
+                                <ImageIcon />
+                                <p>Set featured image</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
