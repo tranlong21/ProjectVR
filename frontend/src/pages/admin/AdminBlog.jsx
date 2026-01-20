@@ -265,7 +265,7 @@ const AdminBlog = () => {
                                 onClick={() => setIsAiConfigOpen(!isAiConfigOpen)}
                                 className="flex items-center gap-1 text-sm text-gray-400 hover:text-white"
                             >
-                                {isAiConfigOpen ? 'Thu gọn' : 'Cấu rộng'}
+                                {isAiConfigOpen ? 'Thu gọn' : 'Mở rộng'}
                                 {isAiConfigOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                             </button>
                         </div>
