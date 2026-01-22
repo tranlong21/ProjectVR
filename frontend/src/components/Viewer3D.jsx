@@ -193,6 +193,8 @@ const Viewer3D = ({
     const [animateTo, setAnimateTo] = useState(null);
     const [activeHotspot, setActiveHotspot] = useState(null);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [autoFocused, setAutoFocused] = useState(false);
+
 
     const onModelLoaded = (scene) => {
         modelRef.current = scene;
@@ -213,6 +215,23 @@ const Viewer3D = ({
             },
         });
         setActiveHotspot(h);
+    };
+    const goPrevHotspot = () => {
+        if (!hotspots.length) return;
+        const prevIndex =
+            currentIndex <= 0
+                ? hotspots.length - 1
+                : currentIndex - 1;
+        goToHotspot(hotspots[prevIndex]);
+    };
+
+    const goNextHotspot = () => {
+        if (!hotspots.length) return;
+        const nextIndex =
+            currentIndex >= hotspots.length - 1
+                ? 0
+                : currentIndex + 1;
+        goToHotspot(hotspots[nextIndex]);
     };
 
     const handleBillboardClick = (h) => {
@@ -237,6 +256,38 @@ const Viewer3D = ({
         });
     };
 
+    useEffect(() => {
+        if (
+            editMode ||
+            autoFocused ||
+            hotspots.length === 0
+        ) return;
+
+        const firstHotspot = [...hotspots]
+            .sort((a, b) => (a.orderId ?? 0) - (b.orderId ?? 0))[0];
+
+        if (
+            firstHotspot?.cameraPosX == null ||
+            firstHotspot?.cameraTargetX == null
+        ) return;
+
+        setAnimateTo({
+            camera: {
+                x: firstHotspot.cameraPosX,
+                y: firstHotspot.cameraPosY,
+                z: firstHotspot.cameraPosZ,
+            },
+            target: {
+                x: firstHotspot.cameraTargetX,
+                y: firstHotspot.cameraTargetY,
+                z: firstHotspot.cameraTargetZ,
+            },
+        });
+
+        setActiveHotspot(firstHotspot);
+        setAutoFocused(true);
+    }, [hotspots, editMode, autoFocused]);
+
     const showTimelinePanel = !editMode;
 
     if (!modelUrl) {
@@ -247,13 +298,17 @@ const Viewer3D = ({
         );
     }
 
+    const currentIndex = hotspots.findIndex(
+        h => h.id === activeHotspot?.id
+    );
+
     return (
         <div className="relative w-full h-full bg-gray-900">
 
             {/* 🔊 BUTTON */}
             <button
                 onClick={handleSpeak}
-                className="absolute top-3 right-3 z-50 text-white bg-black/40 p-2 rounded-full hover:bg-black/60 transition"
+                className="absolute top-3 right-3 z-20 text-white bg-black/40 p-2 rounded-full hover:bg-black/60 transition"
             >
                 {isSpeaking ? (
                     <Volume2 className="w-6 h-6 animate-pulse text-purple-300" />
@@ -270,9 +325,38 @@ const Viewer3D = ({
                                 .getElementById("timelinePanel")
                                 ?.classList.toggle("hidden")
                         }
-                        className="px-4 py-2 bg-black/60 text-white rounded-lg backdrop-blur-md"
+                        className="flex items-center gap-3 px-4 py-2 bg-black/60 text-white rounded-lg backdrop-blur-md"
                     >
-                        Hotspots
+                        {/* PREV */}
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                goPrevHotspot();
+                            }}
+                            className="cursor-pointer select-none"
+                        >
+                            ◀
+                        </span>
+
+                        {/* TITLE */}
+                        <span className="max-w-[160px] truncate text-sm font-medium">
+                            {activeHotspot
+                                ? (lang === "vi"
+                                    ? activeHotspot.titleVi
+                                    : activeHotspot.titleEn)
+                                : "Hotspots"}
+                        </span>
+
+                        {/* NEXT */}
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                goNextHotspot();
+                            }}
+                            className="cursor-pointer select-none"
+                        >
+                            ▶
+                        </span>
                     </button>
                 </div>
             )}

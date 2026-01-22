@@ -284,7 +284,7 @@ const ProjectDetail = () => {
 
                         {/* ==== TAB 3D ==== */}
                         {activeTab === '3d' && project.has3d && (
-                            <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900 p-4">
+                            <div className="relative h-[520px] rounded-xl overflow-hidden border border-[var(--border-color)] shadow-2xl bg-gray-900">
 
                                 {/* ===== DEBUG LOG (USER) ===== */}
                                 {(() => {
@@ -305,37 +305,35 @@ const ProjectDetail = () => {
                                 })()}
                                 {/* ===== END DEBUG ===== */}
 
-                                <div className="w-full h-[460px] rounded-xl overflow-hidden">
-                                    {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
-                                        <Viewer3D
-                                            modelUrl={
-                                                model3d?.modelUrl
-                                                    ? getModelUrl(model3d.modelUrl)
-                                                    : model3d?.fileUrl
-                                                        ? getModelUrl(model3d.fileUrl)
-                                                        : null
-                                            }
-                                            description={modelDescription}
-                                            lang={i18n.language}
-                                            hotspots={model3d?.hotspots || []}
-                                            editMode={false}
-                                            onClickHotspot={(h) =>
-                                                console.log("🟣 USER clicked hotspot:", h)
-                                            }
-                                        />
-                                    ) : (
-                                        <div className="flex items-center justify-center h-full text-white">
-                                            <div className="text-center">
-                                                <p className="text-xl font-bold mb-2">
-                                                    3D Model Not Available
-                                                </p>
-                                                <p className="text-sm">
-                                                    The 3D model for this project is being prepared.
-                                                </p>
-                                            </div>
+                                {model3d && (model3d.modelUrl || model3d.fileUrl) ? (
+                                    <Viewer3D
+                                        modelUrl={
+                                            model3d?.modelUrl
+                                                ? getModelUrl(model3d.modelUrl)
+                                                : model3d?.fileUrl
+                                                    ? getModelUrl(model3d.fileUrl)
+                                                    : null
+                                        }
+                                        description={modelDescription}
+                                        lang={i18n.language}
+                                        hotspots={model3d?.hotspots || []}
+                                        editMode={false}
+                                        onClickHotspot={(h) =>
+                                            console.log("🟣 USER clicked hotspot:", h)
+                                        }
+                                    />
+                                ) : (
+                                    <div className="flex items-center justify-center h-full text-white">
+                                        <div className="text-center">
+                                            <p className="text-xl font-bold mb-2">
+                                                3D Model Not Available
+                                            </p>
+                                            <p className="text-sm">
+                                                The 3D model for this project is being prepared.
+                                            </p>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 

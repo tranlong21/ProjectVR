@@ -14,6 +14,11 @@ const AdminModels = () => {
 
     const [models, setModels] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [autoFocused, setAutoFocused] = useState(false);
+    const [animateTo, setAnimateTo] = useState(null);
+    const [activeHotspot, setActiveHotspot] = useState(null);
+
+
 
     const { t } = useTranslation();
 
@@ -195,24 +200,22 @@ const AdminModels = () => {
                 }
                 editMode={editMode}
                 hotspots={hotspots}
+                animateTo={animateTo}
+                activeHotspot={activeHotspot}
                 onAddHotspot={(pos, camPos, camTarget) => {
                     if (!editMode) return;
 
                     setPendingHotspot({
                         modelId: selectedModel.id,
-
                         x: pos.x,
                         y: pos.y,
                         z: pos.z,
-
                         cameraPosX: camPos.x,
                         cameraPosY: camPos.y,
                         cameraPosZ: camPos.z,
-
                         cameraTargetX: camTarget.x,
                         cameraTargetY: camTarget.y,
                         cameraTargetZ: camTarget.z,
-
                         titleVi: "",
                         titleEn: "",
                         orderId: 1,
@@ -228,6 +231,35 @@ const AdminModels = () => {
             />
         );
     }, [selectedModel, editMode, hotspots]);
+
+    useEffect(() => {
+        if (
+            !editMode &&
+            !autoFocused &&
+            hotspots.length > 0 &&
+            hotspots[0]?.cameraPosX != null
+        ) {
+            const firstHotspot = [...hotspots]
+                .sort((a, b) => (a.orderId ?? 0) - (b.orderId ?? 0))[0];
+
+            setAnimateTo({
+                camera: {
+                    x: firstHotspot.cameraPosX,
+                    y: firstHotspot.cameraPosY,
+                    z: firstHotspot.cameraPosZ,
+                },
+                target: {
+                    x: firstHotspot.cameraTargetX,
+                    y: firstHotspot.cameraTargetY,
+                    z: firstHotspot.cameraTargetZ,
+                },
+            });
+
+            setActiveHotspot(firstHotspot);
+            setAutoFocused(true);
+        }
+    }, [hotspots, editMode, autoFocused]);
+
 
     if (!selectedProject) {
         return (
@@ -590,7 +622,7 @@ const AdminModels = () => {
                                     />
                                     <span className="text-sm font-medium text-red-600 dark:text-red-600">Quá trình tải file có thể mất đến vài phút.</span>
                                 </div>
-                               
+
                             ) : (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
