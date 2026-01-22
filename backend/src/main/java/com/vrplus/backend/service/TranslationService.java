@@ -3,7 +3,9 @@ package com.vrplus.backend.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jsoup.Jsoup;
-import org.jsoup.safety.Safelist;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -12,7 +14,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -24,79 +28,103 @@ public class TranslationService {
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public String translateHtml(String htmlContent, String sourceLang, String targetLang) {
-        if (htmlContent == null || htmlContent.trim().isEmpty()) {
-            return "";
-        }
-
-        try {
-            // Prepare Request
-            Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("q", htmlContent);
-            requestBody.put("source", sourceLang);
-            requestBody.put("target", targetLang);
-            requestBody.put("format", "html");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
-
-            // Send Request
-            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
-
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                String translatedText = root.path("translatedText").asText();
-                return sanitizeHtml(translatedText);
-            }
-        } catch (Exception e) {
-            System.err.println("Translation failed: " + e.getMessage());
-            // Fallback: return original content but maybe with a warning or just the
-            // content?
-            // User requirement: "Error handling & fallback".
-            // Fallback strategy: Return source content or empty.
-            // Since automatic translation is key, returning empty might hide issues.
-            // Returning source allows seeing the error clearly (it's not translated).
-            return htmlContent;
-        }
-        return htmlContent;
-    }
-
+    // ===============================
+    // 1. DỊCH TEXT (TITLE + CONTENT NGẮN)
+    // → LUÔN CHUNK
+    // ===============================
     public String translateText(String text, String sourceLang, String targetLang) {
-        if (text == null || text.trim().isEmpty())
-            return "";
+        if (text == null || text.isBlank()) return text;
 
-        try {
-            Map<String, String> requestBody = new HashMap<>();
-            requestBody.put("q", text);
-            requestBody.put("source", sourceLang);
-            requestBody.put("target", targetLang);
-            requestBody.put("format", "text");
+        List<String> chunks = splitText(text, 300); // ⬅️ QUAN TRỌNG
+        StringBuilder result = new StringBuilder();
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(requestBody, headers);
+        for (String chunk : chunks) {
+            try {
+                Map<String, String> body = new HashMap<>();
+                body.put("q", chunk);
+                body.put("source", sourceLang);
+                body.put("target", targetLang);
+                body.put("format", "text");
 
-            ResponseEntity<String> response = restTemplate.postForEntity(apiUrl, request, String.class);
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                return root.path("translatedText").asText();
+                HttpEntity<Map<String, String>> request =
+                        new HttpEntity<>(body, headers);
+
+                ResponseEntity<String> response =
+                        restTemplate.postForEntity(apiUrl, request, String.class);
+
+                if (response.getStatusCode().is2xxSuccessful()
+                    && response.getBody() != null) {
+
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    result.append(root.path("translatedText").asText(chunk));
+                } else {
+                    result.append(chunk);
+                }
+
+                Thread.sleep(120); // tránh overload API
+
+            } catch (Exception e) {
+                System.err.println("Text translation failed: " + e.getMessage());
+                result.append(chunk); // fallback
             }
-        } catch (Exception e) {
-            System.err.println("Text translation failed: " + e.getMessage());
         }
-        return text;
+
+        return result.toString();
     }
 
-    private String sanitizeHtml(String html) {
-        // Allow common block and inline tags, plus images
-        Safelist safelist = Safelist.relaxed()
-                .addTags("h1", "h2", "h3", "h4", "h5", "h6", "strong", "em", "u", "blockquote", "ul", "ol", "li", "img")
-                .addAttributes("img", "src", "alt", "title")
-                .preserveRelativeLinks(true);
+    // ===============================
+    // 2. DỊCH HTML THEO BLOCK
+    // ===============================
+    public String translateHtmlByBlock(String html,
+                                       String sourceLang,
+                                       String targetLang) {
 
-        return Jsoup.clean(html, safelist);
+        if (html == null || html.isBlank()) return html;
+
+        Document doc = Jsoup.parseBodyFragment(html);
+        Element body = doc.body();
+
+        Elements blocks = body.select("h1, h2, h3, h4, h5, h6, p, li");
+
+        for (Element block : blocks) {
+
+            if (!block.select("img").isEmpty()) continue;
+
+            String text = block.text();
+            if (text == null || text.isBlank()) continue;
+
+            String translated = translateText(text, sourceLang, targetLang);
+            block.text(translated);
+        }
+
+        return body.html();
+    }
+
+    // ===============================
+    // 3. CHIA TEXT THÀNH CHUNKS
+    // ===============================
+    private List<String> splitText(String text, int maxLength) {
+
+        List<String> parts = new ArrayList<>();
+        int start = 0;
+
+        while (start < text.length()) {
+            int end = Math.min(start + maxLength, text.length());
+
+            if (end < text.length()) {
+                int lastDot = text.lastIndexOf('.', end);
+                if (lastDot > start) {
+                    end = lastDot + 1;
+                }
+            }
+
+            parts.add(text.substring(start, end));
+            start = end;
+        }
+
+        return parts;
     }
 }
