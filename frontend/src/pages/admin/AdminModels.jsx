@@ -45,7 +45,7 @@ const AdminModels = () => {
         fetchProjects();
     }, []);
 
-    // Khi đổi project → load models
+    // khi đổi project → load models
     useEffect(() => {
         if (selectedProject) {
             fetchModels(selectedProject.id);

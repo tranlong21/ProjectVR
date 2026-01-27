@@ -23,7 +23,7 @@ const Viewer360 = ({
   const mouseEventsAttached = useRef(false);
   const lastHoveredElement = useRef(null);
   const lastClickTimeRef = useRef(0);
-  
+
 
   const mouseDragRef = useRef({
     isDragging: false,
@@ -161,34 +161,34 @@ const Viewer360 = ({
 
   // Admin Picker: click lên panorama để lấy yaw/pitch
   const handleViewerClickForPick = useCallback((e) => {
-  if (!onClick || !viewerReady) return;
+    if (!onClick || !viewerReady) return;
 
-  if (mouseDragRef.current?.isDragging) {
-    mouseDragRef.current.isDragging = false;
-    return;
-  }
+    if (mouseDragRef.current?.isDragging) {
+      mouseDragRef.current.isDragging = false;
+      return;
+    }
 
-  const viewer = viewerInstance.current;
-  if (!viewer) return;
+    const viewer = viewerInstance.current;
+    if (!viewer) return;
 
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  if (
-    el?.closest('.custom-hotspot') ||
-    el?.closest('.pnlm-hotspot') ||
-    el?.closest('.pnlm-hotspot-base')
-  ) {
-    return;
-  }
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    if (
+      el?.closest('.custom-hotspot') ||
+      el?.closest('.pnlm-hotspot') ||
+      el?.closest('.pnlm-hotspot-base')
+    ) {
+      return;
+    }
 
-  // ✅ API CHẮC CHẮN TỒN TẠI
-  const yaw = viewer.getYaw();
-  const pitch = viewer.getPitch();
+    // ✅ API CHẮC CHẮN TỒN TẠI
+    const yaw = viewer.getYaw();
+    const pitch = viewer.getPitch();
 
-  onClick(
-    Number(pitch.toFixed(2)),
-    Number(yaw.toFixed(2))
-  );
-}, [onClick, viewerReady]);
+    onClick(
+      Number(pitch.toFixed(2)),
+      Number(yaw.toFixed(2))
+    );
+  }, [onClick, viewerReady]);
 
 
   const getIconFile = (hotspot) => {
@@ -305,35 +305,26 @@ const Viewer360 = ({
 
       // Ensure viewer and tracking are ready
       if (!viewer || !g || !g.isTracking || !viewerReady) {
-        lastFramePosRef.current = { x: g?.x || 0, y: g?.y || 0 };
         rafId = requestAnimationFrame(tick);
         return;
       }
 
-      // Calculate localized delta (mimic gestureState.deltaX)
-      const deltaX = g.x - lastFramePosRef.current.x;
-      const deltaY = g.y - lastFramePosRef.current.y;
-      lastFramePosRef.current = { x: g.x, y: g.y };
-
-      // Map User Snippet GESTURES to Existing Enums:
-      // FIVE_FINGERS (Snippet) -> PINCH (Current impl, or OPEN_PALM?)
-      // Wait, User Snippet: FIVE_FINGERS || TWO_HANDS = ZOOM.
-      // Existing: PINCH || TWO_HANDS = ZOOM.
-      // We will use existing PINCH / TWO_HANDS for Zoom.
+      // Use explicit DELTAS from Analyzer (Robust)
+      const deltaX = g.deltaX;
+      const deltaY = g.deltaY;
 
       /* ================== ZOOM IN / OUT ================== */
       if (
         g.type === GestureType.PINCH ||
         g.type === GestureType.TWO_HANDS
       ) {
-        const baseFov = 75; // As per snippet
-
-        // Snippet: targetFov = baseFov * (1 / gestureState.zoomFactor);
+        const baseFov = 75;
+        // Logic aligned with Analyzer: g.zoomFactor increases for Zoom IN.
         const targetFov = baseFov * (1 / g.zoomFactor);
         const clampedFov = Math.max(30, Math.min(100, targetFov));
 
-        // Use Pannellum setHfov (equivalent to camera.fov)
         const currentFov = viewer.getHfov();
+        // Smoothing 0.1 for Zoom as per Reference
         const nextFov = THREE.MathUtils.lerp(
           currentFov,
           clampedFov,
@@ -341,47 +332,44 @@ const Viewer360 = ({
         );
 
         viewer.setHfov(nextFov);
-        // camera.updateProjectionMatrix(); // Implicit in viewer
       }
 
       /* ================== XOAY CAMERA ================== */
-      // User Snippet: OK_GESTURE. 
-      // Existing: OPEN_PALM used for rotation.
       if (g.type === GestureType.OPEN_PALM) {
-        const rotationSpeed = 2.5; // As per snippet
+        // Reference Sensitivity
+        const sensitivity = 2.5;
 
-        // Pannellum uses Yaw/Pitch. 
-        // We map to Spherical to follow logic Y HỆT.
-        // Pannellum Yaw = Theta (approx). Pitch = 90 - Phi_deg.
-
+        // Current Angles
         const currentYaw = viewer.getYaw();
         const currentPitch = viewer.getPitch();
 
         // Convert to Spherical (Radius=10)
-        // phi: 0..PI (Top..Bottom). Pitch: 90..-90 (Top..Bottom).
+        // Pitch 90..-90 (deg) -> Phi 0..PI (rad)
         const phi = THREE.MathUtils.degToRad(90 - currentPitch);
         const theta = THREE.MathUtils.degToRad(currentYaw);
 
         const spherical = new THREE.Spherical(10, phi, theta);
 
+        // Apply Delta
+        // Note: deltaX > 0 means hand moved RIGHT. We want to look RIGHT (increase Theta) or Pan Left? 
+        // Reference: theta -= deltaX * sensitivity (Inverted for Look?)
+        // Let's test: Hand Right -> Drag Scene Right -> Look Left? 
+        // Usually "Drag" means Hand Right -> Scene moves Right -> Camera Looks Left. 
+        // Viewer360 Code was: theta -= deltaX...
+        // Let's stick to Reference logic which subtracts.
 
-        spherical.theta -= deltaX * rotationSpeed * 10;
-        spherical.theta -= deltaX * rotationSpeed * 5; // Tuning for Pannellum scale
-        spherical.phi -= deltaY * rotationSpeed * 5;
+        // Multiplier tuning for Pannellum vs ThreeJS scale
+        // Tuned: Increased to 12/6 for faster rotation (User Req).
+        spherical.theta -= deltaX * sensitivity * 12;
+        spherical.phi -= deltaY * sensitivity * 6;
 
-        spherical.phi = Math.max(
-          0.1,
-          Math.min(Math.PI - 0.1, spherical.phi)
-        );
+        // Clamp Phi
+        spherical.phi = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi));
 
-        // Convert back to Yaw/Pitch
-        // Pitch = 90 - deg(phi)
+        // Convert back
         const newPitch = 90 - THREE.MathUtils.radToDeg(spherical.phi);
         const newYaw = THREE.MathUtils.radToDeg(spherical.theta);
 
-        // camera.position.setFromSpherical(spherical);
-        // camera.lookAt(0, 0, 0);
-        // In Pannellum, we just set the angles.
         viewer.setYaw(newYaw);
         viewer.setPitch(newPitch);
       }
