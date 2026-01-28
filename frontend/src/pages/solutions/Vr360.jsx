@@ -320,7 +320,7 @@ const Vr360 = () => {
                             <h2 className="text-2xl font-bold">{isVi ? 'Sức Mạnh Công Nghệ' : 'Technical Advantages'}</h2>
                             <ul className="space-y-3">
                                 {[
-                                    'WebXR Standard',
+                                    'WebVR Standard',
                                     'React Three Fiber Ecosystem',
                                     'Cloud Streaming Assets',
                                     'Analytics & Heatmap Tracking'

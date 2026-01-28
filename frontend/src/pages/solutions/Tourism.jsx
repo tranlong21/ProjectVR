@@ -201,7 +201,7 @@ const Tourism = () => {
                     <ul className="space-y-3">
                         {[
                             'Ảnh panorama 8K – 16K',
-                            'WebXR – chạy trực tiếp trên trình duyệt',
+                            'WebVR – chạy trực tiếp trên trình duyệt',
                             'Tương thích PC, Mobile, VR Headset',
                             'Tối ưu tải nhanh cho khách quốc tế'
                         ].map((item, idx) => (

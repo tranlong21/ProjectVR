@@ -17,7 +17,7 @@ const CTASection = () => {
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
                     <Link
-                        to="/contact"
+                        to="/projects"
                         className="px-8 py-4 bg-[var(--accent-purple)] text-white rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:bg-[var(--accent-purple-hover)] hover:scale-105 transition-all duration-300 flex items-center"
                     >
                         Start a Project <ArrowRight className="ml-2" />

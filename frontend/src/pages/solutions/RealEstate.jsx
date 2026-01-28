@@ -200,7 +200,7 @@ const RealEstate = () => {
 
                     <ul className="space-y-3">
                         {[
-                            'WebXR – chạy trực tiếp trên trình duyệt',
+                            'WebVR – chạy trực tiếp trên trình duyệt',
                             'Pannellum + Three.js + React',
                             'Không cần cài ứng dụng',
                             'Tối ưu cho PC, Mobile và Tablet'

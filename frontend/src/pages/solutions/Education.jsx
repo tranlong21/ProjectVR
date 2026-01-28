@@ -176,7 +176,7 @@ const Education = () => {
 
           <ul className="space-y-3">
             {[
-              'WebXR – chạy trực tiếp trên trình duyệt',
+              'WebVR – chạy trực tiếp trên trình duyệt',
               'VR 360 (Pannellum) & Unity WebGL',
               'WASM & GPU Acceleration',
               'Hỗ trợ PC, Mobile, VR Headset'

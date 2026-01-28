@@ -58,7 +58,7 @@
     },
     "technology": {
       "title": "Our Technology",
-      "subtitle": "Cutting-edge VR/AR technology powered by WebXR and AI"
+      "subtitle": "Cutting-edge VR/AR technology powered by WebVR and AI"
     },
     "blog": {
       "title": "Blog & News",
@@ -84,7 +84,7 @@
     "education": {
       "title": "VR Education Solutions",
       "subtitle": "Interactive learning powered by 3D models and virtual classrooms",
-      "content": "VRPlus delivers immersive learning environments with 3D STEM models, virtual labs, and VR classrooms. WebXR allows students to interact directly with simulations, significantly improving retention. Teachers can create multimedia lessons and track learner progress."
+      "content": "VRPlus delivers immersive learning environments with 3D STEM models, virtual labs, and VR classrooms. WebVR allows students to interact directly with simulations, significantly improving retention. Teachers can create multimedia lessons and track learner progress."
     },
     "historical_sites": {
       "title": "Reconstructed Heritage Sites",
@@ -93,14 +93,14 @@
     },
     "technology": {
       "title": "VRPlus Technology",
-      "subtitle": "WebXR, 3D and AI combined into one powerful ecosystem",
-      "content": "VRPlus leverages WebXR, Three.js, AI-based optimization, and intelligent hotspot management to deliver smooth VR/3D experiences directly in the browser. It supports large 3D models, real-time streaming, physics simulation, and enterprise scalability."
+      "subtitle": "WebVR, 3D and AI combined into one powerful ecosystem",
+      "content": "VRPlus leverages WebVR, Three.js, AI-based optimization, and intelligent hotspot management to deliver smooth VR/3D experiences directly in the browser. It supports large 3D models, real-time streaming, physics simulation, and enterprise scalability."
     }
   },
   "technology": {
     "title": "Core Technologies of VRPlus",
-    "subtitle": "Next-generation WebXR • 3D • Panorama Platform",
-    "description": "VRPlus integrates WebXR, real-time 3D, 360° panoramas and intelligent hotspots to deliver fully interactive virtual experiences directly in the browser.",
+    "subtitle": "Next-generation WebVR • 3D • Panorama Platform",
+    "description": "VRPlus integrates WebVR, real-time 3D, 360° panoramas and intelligent hotspots to deliver fully interactive virtual experiences directly in the browser.",
     "sections": {
       "r3f_engine_title": "React Three Fiber Engine",
       "r3f_engine_desc": "Built on Three.js with React Three Fiber, VRPlus enables building 3D scenes with JSX, offering high performance and scalable architecture.",
@@ -119,7 +119,7 @@
       "spatial_audio_title": "Spatial Audio & Voice Guide",
       "spatial_audio_desc": "Immersive 3D audio and voice narration bring environments to life and enhance presence in VR.",
       "multi_device_title": "Cross-Platform Compatibility",
-      "multi_device_desc": "Fully compatible with PC, mobile and VR headsets through WebXR—no installation required.",
+      "multi_device_desc": "Fully compatible with PC, mobile and VR headsets through —no installation required.",
       "realtime_sync_title": "Real-time Sync",
       "realtime_sync_desc": "An architecture ready for multi-user scenarios: shared viewing, interactions and synchronized camera states."
     }

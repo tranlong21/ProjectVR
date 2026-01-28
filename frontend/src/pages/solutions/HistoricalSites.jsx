@@ -126,6 +126,74 @@ const HistoricalSites = () => {
             mà còn mở ra phương thức giáo dục và truyền thông hiện đại, bền vững.
           </p>
         </section>
+        {/* ===== IMAGE STORY – LANG BAC HO ===== */}
+        <section className="space-y-10">
+          <h2 className="text-3xl font-bold text-center">
+            Không gian Lăng Chủ tịch Hồ Chí Minh
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {/* IMAGE 1 */}
+            <figure className="space-y-3">
+              <img
+                src="/assets/images/historical-sites/LangBacHo.jpg"
+                alt="Quảng trường Ba Đình và Lăng Chủ tịch Hồ Chí Minh"
+                className="rounded-2xl shadow-lg border border-[var(--border-color)]"
+              />
+              <figcaption className="text-sm text-[var(--text-secondary)]">
+                Quảng trường Ba Đình – nơi diễn ra các sự kiện lịch sử trọng đại của dân tộc Việt Nam.
+              </figcaption>
+            </figure>
+
+            {/* IMAGE 2 */}
+            <figure className="space-y-3">
+              <img
+                src="/assets/images/historical-sites/LangBacHo1.jpg"
+                alt="Mặt chính Lăng Chủ tịch Hồ Chí Minh"
+                className="rounded-2xl shadow-lg border border-[var(--border-color)]"
+              />
+              <figcaption className="text-sm text-[var(--text-secondary)]">
+                Kiến trúc Lăng Chủ tịch Hồ Chí Minh mang phong cách trang nghiêm, bền vững và biểu tượng.
+              </figcaption>
+            </figure>
+
+            {/* IMAGE 3 */}
+            <figure className="space-y-3">
+              <img
+                src="/assets/images/historical-sites/LangBacHo2.jpg"
+                alt="Nghi lễ chào cờ tại Quảng trường Ba Đình"
+                className="rounded-2xl shadow-lg border border-[var(--border-color)]"
+              />
+              <figcaption className="text-sm text-[var(--text-secondary)]">
+                Nghi lễ chào cờ thể hiện tinh thần yêu nước và truyền thống thiêng liêng của dân tộc.
+              </figcaption>
+            </figure>
+
+            {/* IMAGE 4 */}
+            <figure className="space-y-3">
+              <img
+                src="/assets/images/historical-sites/LangBacHo3.jpg"
+                alt="Lễ thượng cờ tại Lăng Chủ tịch Hồ Chí Minh"
+                className="rounded-2xl shadow-lg border border-[var(--border-color)]"
+              />
+              <figcaption className="text-sm text-[var(--text-secondary)]">
+                Không gian Lăng Bác trong các nghi lễ quốc gia, mang giá trị chính trị và văn hóa sâu sắc.
+              </figcaption>
+            </figure>
+          </div>
+
+          {/* IMAGE FULL WIDTH */}
+          <figure className="space-y-3">
+            <img
+              src="/assets/images/historical-sites/LangBacHo4.jpg"
+              alt="Đội danh dự diễu hành trước Lăng Chủ tịch Hồ Chí Minh"
+              className="w-full rounded-3xl shadow-xl border border-[var(--border-color)]"
+            />
+            <figcaption className="text-sm text-center text-[var(--text-secondary)]">
+              Lễ diễu hành danh dự trước Lăng Chủ tịch Hồ Chí Minh – biểu tượng của kỷ luật, lòng trung thành và niềm tự hào dân tộc.
+            </figcaption>
+          </figure>
+        </section>
 
         {/* USE CASES */}
         <section className="space-y-6">
@@ -159,7 +227,7 @@ const HistoricalSites = () => {
 
           <ul className="space-y-3">
             {[
-              'WebXR – chạy trực tiếp trên trình duyệt',
+              'WebVR – chạy trực tiếp trên trình duyệt',
               'VR 360 + 3D GLB/GLTF',
               'Tối ưu PC, Mobile & VR Headset',
               'Phù hợp giáo dục – du lịch – truyền thông'
